@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "linefollow.h"
 #include "commonutils.h"
 #include "globals.h"
 
