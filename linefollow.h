@@ -10,4 +10,13 @@ void simpleFollow(int EXIT_CONDITION, uint8_t SPEED, uint8_t CORRECTION_SPEED, b
 
 void simpleFollow(int EXIT_CONDITION, uint8_t SPEED, uint8_t CORRECTION_SPEED, bool CORRECTION_FLIP, int LOOP_DELAY, uint8_t BLIP_SPEED, int BLIP_DURATION);
 
+void leftTurn();
+
+void leftTurn(uint8_t L_SPEED, uint8_t R_SPEED, int LOOP_DELAY);
+
+void rightTurn();
+
+void rightTurn(uint8_t L_SPEED, uint8_t R_SPEED, int LOOP_DELAY);
+
+
 #endif

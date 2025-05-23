@@ -25,6 +25,25 @@ const uint8_t MOTOR_B_REV = 0b00001000;
 const uint8_t MOTOR_B_MASK = 0b00001100;
 const uint8_t MOTOR_B_INV_MASK = 255 - MOTOR_B_MASK;
 
+// LOCATION INDEX
+// 0 = HOME
+// 1 = INITIAL PATH BEFORE T JUNC
+// 2 = T JUNC
+// 3 = SECOND PATH BEFORE X JUNC
+// 4 = X JUNC
+// 5 = PATH TO END LINE
+// 6 = END LINE
+// 7 = ARM DEPLOY
+// 8 = ARM RETRACT
+// 9 = EXIT
+int LOCATION = 0;
+
+// PATHDIR INDEX
+// 0 = UNKNOWN;
+// 1 = PATH A, INITIAL LEFT, THEN RIGHT
+// 2 = PATH B, INITIAL RIGHT, THEN LEFT
+int PATHDIR = 0;
+
 const uint8_t SENSOR_PINS[6] = {A0, A1, A2, A3, 7, 4};
 bool SENSOR_STATE[6] = {false, false, false, false, false, false};
 
@@ -37,6 +56,37 @@ void setup() {
 }
 
 void loop() {
+  LOCATION = 1;
   simpleFollow(3, 255, 255, true, 50);
   simpleFollow(4, 200, 200, true, 50);
+  LOCATION = 2;
+  PATHDIR = junctionDetect(2);
+  switch (PATHDIR) {
+    case 1 :
+      leftTurn(255,255,50);
+      break;
+    case 2 :
+      rightTurn(255,255,50);
+      break;
+    default :
+      exit(0);
+  }
+  LOCATION = 3;
+  simpleFollow(3, 255, 255, true, 50);
+  simpleFollow(4, 200, 200, true, 50); 
+  LOCATION = 4;
+  if (junctionDetect(2) == 0) {
+    switch (PATHDIR) {
+      case 1 :
+        rightTurn(255,255,50);
+        break;
+      case 2 :
+        leftTurn(255,255,50);
+        break;
+      default :
+        exit(0);
+    }
+  }
+  simpleFollow(3, 255, 255, true, 50);
+
 }

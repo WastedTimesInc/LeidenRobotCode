@@ -12,6 +12,38 @@ void readSensors() {
   }
 }
 
+int junctionDetect(int POS) {
+  //Returns 0 for X
+  //Returns 1 for T to left 
+  //Returns 2 for T to right
+  //Returns -1 for error
+  switch (POS) {
+    case 1:
+      if (SENSOR_STATE[0] && SENSOR_STATE[1]) {
+        return 0;
+      } else if (SENSOR_STATE[0] && !SENSOR_STATE[1]) {
+        return 1;
+      } else if (!SENSOR_STATE[0] && SENSOR_STATE[1]) {
+        return 2;
+      }
+      return -1;
+      break;
+    case 2:
+      if (SENSOR_STATE[4] && SENSOR_STATE[5]) {
+        return 0;
+      } else if (SENSOR_STATE[4] && !SENSOR_STATE[5]) {
+        return 1;
+      } else if (!SENSOR_STATE[4] && SENSOR_STATE[5]) {
+        return 2;
+      }
+      return -1;
+      break;
+    default:
+      return -1;
+      break;
+  }
+}
+
 bool exitCondition(int CHECK) {
   //EXIT CONDITIONS ARE AS FOLLOWS
   // 1 - Detect both front sensors
