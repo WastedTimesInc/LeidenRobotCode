@@ -1,10 +1,26 @@
+//<--------------------INCLUDES-------------------->
+// Arduino.h      -   Standard arduino library
+// linefollow.h   -   Line following functions
+// commonutils.h  -   Common utilities 
+// globals.h      -   extern call for all global vars
 #include <Arduino.h>
 #include "linefollow.h"
 #include "commonutils.h"
 #include "globals.h"
 
+
+//<--------------------MOTOR CTRL-------------------->
+// Motor parameters section, containes control addresses,
+// pins, stata variables, adresses
+//
+// CTRL_ADDR          -   I2C Motor control address
+// CURRENT            -   Stores data currently written to I2C chip
+// MOTOR_A(B)_STATE   -   State variables for motors, 0=off, 1=fwd, 2=rev
+// MOTOR_A(B)_SPEED   -   Speed stat for motors, 0-255
+// SPD_PIN_A(B)       -   PWM pins for motor control
+// MASKS              -   All the necessary masks for motor control
 const int CTRL_ADDR = 0x20;
-// Stores current I2C state
+
 uint8_t CURRENT = 0;
 
 uint8_t MOTOR_A_STATE = 0;
@@ -26,6 +42,10 @@ const uint8_t MOTOR_B_REV = 0b00001000;
 const uint8_t MOTOR_B_MASK = 0b00001100;
 const uint8_t MOTOR_B_INV_MASK = 255 - MOTOR_B_MASK;
 
+
+//<--------------------LOCATION AND PATH-------------------->
+// These two variables locate us both along the path, and on the correct path
+//
 // LOCATION INDEX
 // 0 = HOME
 // 1 = INITIAL PATH BEFORE T JUNC
@@ -37,14 +57,22 @@ const uint8_t MOTOR_B_INV_MASK = 255 - MOTOR_B_MASK;
 // 7 = ARM DEPLOY
 // 8 = ARM RETRACT
 // 9 = EXIT
-int LOCATION = 0;
-
+//
 // PATHDIR INDEX
 // 0 = UNKNOWN;
 // 1 = PATH A, INITIAL LEFT, THEN RIGHT
 // 2 = PATH B, INITIAL RIGHT, THEN LEFT
+int LOCATION = 0;
 int PATHDIR = 0;
 
+
+//<--------------------SENSOR ARRAYS-------------------->
+// Two arrays that store sensor pins and sensor data
+// 
+// SENSOR_PINS    -   Stores sensor pins for line sensors
+// SENSOR_STATE   -   Stores sensor state for line sensors
+// US_PINS        -   Stores sensor pins for ultrasonics
+// US_STATE       -   Stores sensor state for usltrasonics
 const uint8_t SENSOR_PINS[6] = {A0, A1, A2, A3, 7, 4};
 bool SENSOR_STATE[6] = {false, false, false, false, false, false};
 

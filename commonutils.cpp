@@ -1,34 +1,31 @@
 #include "commonutils.h"
 
 void writeI2C(uint8_t ADDR, uint8_t VAL){
-  Wire.beginTransmission(ADDR);
-  Wire.write(VAL);
-  Wire.endTransmission();
+  Wire.beginTransmission(ADDR); // Open transimssion at ADDR
+  Wire.write(VAL); // Write VAL
+  Wire.endTransmission(); // Close transmission
 }
 
 void readSensors() {
+  // TODO: Sensor reading with thresholds
   for (int i = 0; i < 6; i++) {
     SENSOR_STATE[i] = true;
   }
 }
 
 int junctionDetect(int POS) {
-  //Returns 0 for X
-  //Returns 1 for T to left 
-  //Returns 2 for T to right
-  //Returns -1 for error
-  switch (POS) {
-    case 1:
+  switch (POS) { // Switch on POS to select front or rear sensors
+    case 1: // Checks both front sensors
       if (SENSOR_STATE[0] && SENSOR_STATE[1]) {
-        return 0;
+        return 0; // X Junction detected (0 & 1 true)
       } else if (SENSOR_STATE[0] && !SENSOR_STATE[1]) {
-        return 1;
+        return 1; // T Junction (left) detected (0 true & 1 false)
       } else if (!SENSOR_STATE[0] && SENSOR_STATE[1]) {
-        return 2;
+        return 2; // T Junction (left) detected (0 false & 1 true)
       }
-      return -1;
+      return -1; // General return error
       break;
-    case 2:
+    case 2: // Same as above...
       if (SENSOR_STATE[4] && SENSOR_STATE[5]) {
         return 0;
       } else if (SENSOR_STATE[4] && !SENSOR_STATE[5]) {
@@ -38,26 +35,14 @@ int junctionDetect(int POS) {
       }
       return -1;
       break;
-    default:
+    default: // Default return error
       return -1;
       break;
   }
 }
 
 bool exitCondition(int CHECK) {
-  //EXIT CONDITIONS ARE AS FOLLOWS
-  // 1 - Detect both front sensors
-  // 2 - Detect both rear sensors
-  // 3 - Detect A front sensors
-  // 4 - Detect A rear sensor
-  // 5 - Detect both central sensors
-  // 6 - Detect A central sensor
-  // 7 - Detect TL Sensor
-  // 8 - Detect TR Sensor
-  // 9 - Detect CL Sensor
-  // 10 - Detect CR Sensor
   readSensors();  // Update sensor values
-
   switch (CHECK) {
     case 1: // Detect both front sensors
       if (SENSOR_STATE[0] && SENSOR_STATE[1])
@@ -74,43 +59,41 @@ bool exitCondition(int CHECK) {
         return true;
       break;
 
-    case 4: // Detect any rear sensor (fixed)
+    case 4: // Detect any rear sensor
       if (SENSOR_STATE[4] || SENSOR_STATE[5])
         return true;
       break;
 
-    case 5:
+    case 5: // Detect both central sensors
       if (SENSOR_STATE[2] && SENSOR_STATE[3])
         return true;
       break;
 
-    case 6:
+    case 6: // Detect any central sensor
       if (SENSOR_STATE[2] || SENSOR_STATE[3])
         return true;
       break;
 
-    case 7:
+    case 7: // Detect TL sensor
       if (SENSOR_STATE[0])
         return true;
       break;
 
-    case 8:
+    case 8: // Detect TR sensor
       if (SENSOR_STATE[1])
         return true;
       break;
 
-    case 9:
+    case 9: // Detect CL sensor
       if (SENSOR_STATE[2])
         return true;
       break;
 
-    case 10:
+    case 10: // Detect CR sensor
       if (SENSOR_STATE[3])
         return true;
       break;
-
-
-    default:
+    default: // Default break and return false
       break;
   }
 
@@ -119,23 +102,23 @@ bool exitCondition(int CHECK) {
 
 void initSystems(bool VERBOSE) {
   if (VERBOSE == true) {
-    Serial.begin(115200);
+    Serial.begin(115200); // If verbose, begin serial
   }
-  pinMode(SPD_PIN_A, OUTPUT);
-  pinMode(SPD_PIN_B, OUTPUT);
-  for (int i = 0; i < 6; i++) {
-    pinMode(SENSOR_PINS[i], OUTPUT);
+  pinMode(SPD_PIN_A, OUTPUT); // Init motor A pwm pin
+  pinMode(SPD_PIN_B, OUTPUT); // Init motor B pwm pin
+  for (int i = 0; i < 6; i++) { // For loop for sensors
+    pinMode(SENSOR_PINS[i], INPUT); // Init sensor i pin
   }
-  Wire.begin();
-  readSensors();
+  Wire.begin(); // Init I2C
+  readSensors(); // Pre read sensors
 }
 
 void initSystems() {
-  pinMode(SPD_PIN_A, OUTPUT);
-  pinMode(SPD_PIN_B, OUTPUT);
-  for (int i = 0; i < 6; i++) {
-    pinMode(SENSOR_PINS[i], OUTPUT);
+  pinMode(SPD_PIN_A, OUTPUT); // Init motor A pwm pin
+  pinMode(SPD_PIN_B, OUTPUT); // Init motor B pwm pin
+  for (int i = 0; i < 6; i++) { // For loop for sensors
+    pinMode(SENSOR_PINS[i], INPUT); // Init sensor i pin
   }
-  Wire.begin();
-  readSensors();
+  Wire.begin(); // Init I2C
+  readSensors(); // Pre read sensors
 }
