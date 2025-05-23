@@ -28,9 +28,15 @@ const uint8_t MOTOR_B_INV_MASK = 255 - MOTOR_B_MASK;
 const uint8_t SENSOR_PINS[6] = {A0, A1, A2, A3, 7, 4};
 bool SENSOR_STATE[6] = {false, false, false, false, false, false};
 
+const uint8_t US_PINS[2] = {12, 13};
+uint8_t US_STATE[2] = {0, 0};
+
 
 void setup() {
+  initSystems();
 }
 
 void loop() {
+  simpleFollow(3, 255, 255, true, 50);
+  simpleFollow(4, 200, 200, true, 50);
 }

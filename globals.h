@@ -35,4 +35,7 @@ extern const uint8_t MOTOR_B_INV_MASK;
 extern const uint8_t SENSOR_PINS[];
 extern bool SENSOR_STATE[];
 
+extern const uint8_t US_PINS[];
+extern uint8_t US_STATE[];
+
 #endif // GLOBALS_H
