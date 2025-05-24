@@ -4,8 +4,9 @@
 #include <Arduino.h>
 #include "commonutils.h"
 #include "globals.h"
+
 // writeMotor
-// This write a motor to a given speed and direction, available in two configs
+// This writes a(all) motor(s) to a given speed and direction, available in two configs
 //
 // writeMotor(uint8_t MOTOR, uint8_t DIR, uint8_t SPEED)
 //    Write the speed and direction of just one motor

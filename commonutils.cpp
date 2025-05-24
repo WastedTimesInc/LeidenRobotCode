@@ -21,7 +21,7 @@ int junctionDetect(int POS) {
       } else if (SENSOR_STATE[0] && !SENSOR_STATE[1]) {
         return 1; // T Junction (left) detected (0 true & 1 false)
       } else if (!SENSOR_STATE[0] && SENSOR_STATE[1]) {
-        return 2; // T Junction (left) detected (0 false & 1 true)
+        return 2; // T Junction (right) detected (0 false & 1 true)
       }
       return -1; // General return error
       break;

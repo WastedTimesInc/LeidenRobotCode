@@ -81,7 +81,6 @@ uint8_t US_STATE[2] = {0, 0};
 
 
 void setup() {
-  initSystems();
 }
 
 void loop() {
