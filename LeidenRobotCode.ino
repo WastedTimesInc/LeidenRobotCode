@@ -98,7 +98,7 @@ void loop() {
   LOCATION = 1;
   dynamicFollow(4, 255, 50, 0.8);
   LOCATION = 2;
-  PATHDIR = detectJunction(2);
+  PATHDIR = junctionDetect(2);
   switch (PATHDIR) {
     case 1 : {
       leftTurn(50, 100);

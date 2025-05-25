@@ -106,13 +106,13 @@ void dynamicFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float DAMP
   writeMotor(0, 0, 0, 0);
 }
 
-void highSpeedFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float CORR_GAIN) {
-  readUltrasonic();
+void highSpeedFollowLegacy(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float CORR_GAIN) {
+  readUltrasonic(); // Update ultrasonic sensors
   uint16_t BASE_LEFT = US_STATE[0]; // Left calibration shot on function call
   uint16_t BASE_RIGHT = US_STATE[1]; // Right calibration shot on function call
   int16_t K = int16_t(CORR_GAIN * 1000.0f); // Convert CORR_GAIN to int for faster intiger math on 8bit AVR
   writeMotor(1, SPEED, 1, SPEED); // Set cruising speed
-  while(!exitCondition(EXIT_CONDITION)) { // Run while exit condition met
+  while(!exitCondition(EXIT_CONDITION)) { // Run until exit condition met
     readUltrasonic(); // Update ultrasonic sensors, no need to update line sensors as they are called in exitCondition()
     int16_t ERR_LEFT = int16_t(US_STATE[0]) - int16_t(BASE_LEFT); // Calculate left error
     int16_t ERR_RIGHT = int16_t(US_STATE[1]) - int16_t(BASE_RIGHT); // Calculate right error
@@ -123,6 +123,34 @@ void highSpeedFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float CO
     uint8_t SPEED_LEFT  = uint8_t( constrain(int16_t(SPEED) - DELTA, 0, 255) ); // Calculate left speed with oflow protection
     uint8_t SPEED_RIGHT = uint8_t( constrain(int16_t(SPEED) + DELTA, 0, 255) ); // Calculate right speed with oflow protection
     writeMotor(1, SPEED_LEFT, 1, SPEED_RIGHT); // Write corrected speed
+    delay(LOOP_DELAY); // Loop delay
+  }
+  writeMotor(0,0,0,0); // Stop motors on exit
+}
+
+void highSpeedFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float CORR_GAIN) {
+  readUltrasonic(); // Update ultrasonic sensors
+  uint16_t BASE_LEFT = US_STATE[0]; // Left calibration shot
+  uint16_t BASE_RIGHT = US_STATE[1]; // Right calibration shot
+  int16_t  BASE_NUM = int16_t(BASE_RIGHT) - int16_t(BASE_LEFT); // Numerator for base ratio
+  uint16_t BASE_DEN = BASE_LEFT + BASE_RIGHT; // Denominator for base ratio
+  int16_t  BASE_RATIO = (int32_t(BASE_NUM) * 1000L) / BASE_DEN; // Base ratio ×1000
+  int16_t  K = int16_t(CORR_GAIN * 1000.0f); // Convert CORR_GAIN to int for faster intiger math on 8bit AVR
+  writeMotor(1, SPEED, 1, SPEED); // Set cruising speed
+  while(!exitCondition(EXIT_CONDITION)) { // Run until exit condition met
+    readUltrasonic(); // Update ultrasonic sensors
+    uint16_t CUR_LEFT  = US_STATE[0]; // Current left
+    uint16_t CUR_RIGHT = US_STATE[1]; // Current right
+    int16_t  CUR_NUM = int16_t(CUR_RIGHT) - int16_t(CUR_LEFT); // Numerator
+    uint16_t CUR_DEN = CUR_LEFT + CUR_RIGHT; // Denominator
+    int16_t  CUR_RATIO = (int32_t(CUR_NUM) * 1000L) / CUR_DEN; // Current ratio ×1000
+    int16_t  ERROR = CUR_RATIO - BASE_RATIO; // Proportional error
+    int16_t  DELTA = (int32_t(ERROR) * K) / 1000; // Scaled correction
+    if(DELTA >  SPEED) DELTA =  SPEED; // Clamp high
+    if(DELTA < -SPEED) DELTA = -SPEED; // Clamp low
+    int16_t TMP_LEFT  = constrain(int16_t(SPEED) - DELTA , 0, 255); // Calculate left speed with oflow protection
+    int16_t TMP_RIGHT = constrain(int16_t(SPEED) + DELTA , 0, 255); // Calculate right speed with oflow protection
+    writeMotor(1, uint8_t(TMP_LEFT), 1, uint8_t(TMP_RIGHT)); // Write corrected speed
     delay(LOOP_DELAY); // Loop delay
   }
   writeMotor(0,0,0,0); // Stop motors on exit
