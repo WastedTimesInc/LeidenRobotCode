@@ -27,7 +27,7 @@ void simpleFollow(int EXIT_CONDITION, uint8_t SPEED, uint8_t CORRECTION_SPEED, b
 void dynamicFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float DAMPING_FACTOR);
 void dynamicFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float DAMPING_FACTOR, uint8_t BLIP_SPEED, int BLIP_DURATION);
 
-void highSpeedFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float CORR_GAIN, uint8_t PING_ITERS);
+void highSpeedFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float CORR_GAIN);
 
 // leftTurn
 // Pivots the robot left on itself using the CL sensor to detect the new line

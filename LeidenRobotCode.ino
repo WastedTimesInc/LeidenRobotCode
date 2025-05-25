@@ -95,5 +95,33 @@ void setup() {
 }
 
 void loop() {
-
+  LOCATION = 1;
+  dynamicFollow(4, 255, 50, 0.8);
+  LOCATION = 2;
+  PATHDIR = detectJunction(2);
+  switch (PATHDIR) {
+    case 1 : {
+      leftTurn(50, 100);
+      break;
+    }
+    case 2 : {
+      rightTurn(50, 100);
+      break;
+    }
+  }
+  LOCATION = 3;
+  highSpeedFollow(4, 255, 50, 0.4);
+  LOCATION = 4;
+  switch (PATHDIR) {
+    case 1 : {
+      rightTurn(50, 100);
+      break;
+    }
+    case 2 : {
+      leftTurn(50, 100);
+      break;
+    }
+  }
+  LOCATION = 5;
+  dynamicFollow(3, 255, 50, 0.8);
 }
