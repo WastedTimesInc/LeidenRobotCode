@@ -2,6 +2,9 @@
 #define GLOBALS_H
 
 #include <Arduino.h>
+#include "NewPing.h"
+
+extern bool GLOBAL_VERBOSE;
 
 // I2C address for motor controller
 extern const int CTRL_ADDR;
@@ -34,8 +37,10 @@ extern const uint8_t MOTOR_B_INV_MASK;
 
 extern const uint8_t SENSOR_PINS[];
 extern bool SENSOR_STATE[];
+extern const uint16_t SENSOR_THRESHOLD;
 
 extern const uint8_t US_PINS[];
-extern uint8_t US_STATE[];
+extern uint16_t US_STATE[];
+extern NewPing US_SENSORS[];
 
 #endif // GLOBALS_H

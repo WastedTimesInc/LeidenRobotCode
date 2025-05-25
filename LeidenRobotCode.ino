@@ -7,6 +7,10 @@
 #include "linefollow.h"
 #include "commonutils.h"
 #include "globals.h"
+#include "unittests.h"
+#include "NewPing.h"
+
+bool GLOBAL_VERBOSE = true;
 
 
 //<--------------------MOTOR CTRL-------------------->
@@ -75,46 +79,21 @@ int PATHDIR = 0;
 // US_STATE       -   Stores sensor state for usltrasonics
 const uint8_t SENSOR_PINS[6] = {A0, A1, A2, A3, 7, 4};
 bool SENSOR_STATE[6] = {false, false, false, false, false, false};
+const uint16_t SENSOR_THRESHOLD = 500;
 
 const uint8_t US_PINS[2] = {12, 13};
-uint8_t US_STATE[2] = {0, 0};
+uint16_t US_STATE[2] = {0, 0};
+NewPing US_SENSORS[2] = {
+  NewPing(US_PINS[0],US_PINS[0],200),
+  NewPing(US_PINS[1],US_PINS[1],200)
+};
 
 
 void setup() {
+  initSystems();
+  testMotors();
 }
 
 void loop() {
-  LOCATION = 1;
-  simpleFollow(3, 255, 255, true, 50);
-  simpleFollow(4, 200, 200, true, 50);
-  LOCATION = 2;
-  PATHDIR = junctionDetect(2);
-  switch (PATHDIR) {
-    case 1 :
-      leftTurn(255,255,50);
-      break;
-    case 2 :
-      rightTurn(255,255,50);
-      break;
-    default :
-      exit(0);
-  }
-  LOCATION = 3;
-  simpleFollow(3, 255, 255, true, 50);
-  simpleFollow(4, 200, 200, true, 50); 
-  LOCATION = 4;
-  if (junctionDetect(2) == 0) {
-    switch (PATHDIR) {
-      case 1 :
-        rightTurn(255,255,50);
-        break;
-      case 2 :
-        leftTurn(255,255,50);
-        break;
-      default :
-        exit(0);
-    }
-  }
-  simpleFollow(3, 255, 255, true, 50);
 
 }

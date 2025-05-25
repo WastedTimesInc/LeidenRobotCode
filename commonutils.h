@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "globals.h"
+#include "NewPing.h"
 
 // writeI2C
 // This is a generic function to write a value VAL at an address ADDR over I2C
@@ -13,6 +14,9 @@ void writeI2C(uint8_t ADDR, uint8_t VAL);
 // readSensors
 // This is a function that reads line sensors and saves their result in the global SENSOR_STATE array
 void readSensors();
+
+void readUltrasonic();
+void readUltrasonic(uint8_t PING_ITER);
 
 // junctionDetect
 // Detects the type of junction with a set of sensors, POS: 1=front_sensors, 2=rear_sensors

@@ -7,10 +7,22 @@ void writeI2C(uint8_t ADDR, uint8_t VAL){
 }
 
 void readSensors() {
-  // TODO: Sensor reading with thresholds
-  for (int i = 0; i < 6; i++) {
-    SENSOR_STATE[i] = true;
+  for (int i = 0; i < 4; i++) {
+    SENSOR_STATE[i] = !(analogRead(SENSOR_PINS[i]) > SENSOR_THRESHOLD);
   }
+  for (int i = 4; i < 6; i++) {
+    SENSOR_STATE[i] = !digitalRead(SENSOR_PINS[i]);
+  }
+}
+
+void readUltrasonic() {
+  US_STATE[0] = US_SENSORS[0].ping_median(5);
+  US_STATE[1] = US_SENSORS[1].ping_median(5);
+}
+
+void readUltrasonic(uint8_t PING_ITER) {
+  US_STATE[0] = US_SENSORS[0].ping_median(PING_ITER);
+  US_STATE[1] = US_SENSORS[1].ping_median(PING_ITER);
 }
 
 int junctionDetect(int POS) {
@@ -114,6 +126,9 @@ void initSystems(bool VERBOSE) {
 }
 
 void initSystems() {
+  if (GLOBAL_VERBOSE == true) {
+    Serial.begin(115200); // If global verbose, begin serial
+  }
   pinMode(SPD_PIN_A, OUTPUT); // Init motor A pwm pin
   pinMode(SPD_PIN_B, OUTPUT); // Init motor B pwm pin
   for (int i = 0; i < 6; i++) { // For loop for sensors

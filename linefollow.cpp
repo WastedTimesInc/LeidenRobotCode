@@ -44,56 +44,140 @@ void simpleFollow(int EXIT_CONDITION, uint8_t SPEED, uint8_t CORRECTION_SPEED, b
   writeMotor(0,0,0,0); // Stop motors on exit
 }
 
-void leftTurn(int LOOP_DELAY) {
+void dynamicFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float DAMPING_FACTOR){
+  float CORR_MULTIPLIER = 1.0f;  // Starts at 100 % of SPEED
+  while (!exitCondition(EXIT_CONDITION)) {
+    if (!SENSOR_STATE[2] && !SENSOR_STATE[3]) {
+      writeMotor(1, SPEED, 1, SPEED);
+      CORR_MULTIPLIER = 1.0f;
+    }
+    else if (!SENSOR_STATE[2] && SENSOR_STATE[3]) {
+      CORR_MULTIPLIER *= DAMPING_FACTOR;
+      if (CORR_MULTIPLIER < 0.20f) {
+        CORR_MULTIPLIER = 0.20f;
+      }
+      uint8_t CORR_SPEED = uint8_t(SPEED * CORR_MULTIPLIER);
+      writeMotor(1, SPEED, 1, CORR_SPEED);
+    }
+    else if (SENSOR_STATE[2] && !SENSOR_STATE[3]) {
+      CORR_MULTIPLIER *= DAMPING_FACTOR;
+      if (CORR_MULTIPLIER < 0.20f) {
+        CORR_MULTIPLIER = 0.20f;
+      }
+      uint8_t CORR_SPEED = uint8_t(SPEED * CORR_MULTIPLIER);
+      writeMotor(1, CORR_SPEED, 1, SPEED);
+    }
+    delay(LOOP_DELAY);
+  }
+  writeMotor(0, 0, 0, 0);
+}
+
+void dynamicFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float DAMPING_FACTOR, uint8_t BLIP_SPEED, int BLIP_DURATION){
+  float CORR_MULTIPLIER = 1.0f;  // Starts at 100 % of SPEED
+  while (!exitCondition(EXIT_CONDITION)) {
+    if (!SENSOR_STATE[2] && !SENSOR_STATE[3]) {
+      writeMotor(1, BLIP_SPEED, 1, BLIP_SPEED);
+      delay(BLIP_DURATION);
+      writeMotor(1, SPEED, 1, SPEED);
+      CORR_MULTIPLIER = 1.0f;
+    }
+    else if (!SENSOR_STATE[2] && SENSOR_STATE[3]) {
+      CORR_MULTIPLIER *= DAMPING_FACTOR;
+      if (CORR_MULTIPLIER < 0.20f) {
+        CORR_MULTIPLIER = 0.20f;
+      }
+      uint8_t CORR_SPEED = uint8_t(SPEED * CORR_MULTIPLIER);
+      writeMotor(1, BLIP_SPEED, 1, BLIP_SPEED);
+      delay(BLIP_DURATION);
+      writeMotor(1, SPEED, 1, CORR_SPEED);
+    }
+    else if (SENSOR_STATE[2] && !SENSOR_STATE[3]) {
+      CORR_MULTIPLIER *= DAMPING_FACTOR;
+      if (CORR_MULTIPLIER < 0.20f) {
+        CORR_MULTIPLIER = 0.20f;
+      }
+      uint8_t CORR_SPEED = uint8_t(SPEED * CORR_MULTIPLIER);
+      writeMotor(1, BLIP_SPEED, 1, BLIP_SPEED);
+      delay(BLIP_DURATION);
+      writeMotor(1, CORR_SPEED, 1, SPEED);
+    }
+    delay(LOOP_DELAY);
+  }
+  writeMotor(0, 0, 0, 0);
+}
+
+void highSpeedFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float CORR_GAIN) {
+  readUltrasonic();
+  uint16_t BASE_LEFT = US_STATE[0]; // Left calibration shot on function call
+  uint16_t BASE_RIGHT = US_STATE[1]; // Right calibration shot on function call
+  int16_t K = int16_t(CORR_GAIN * 1000.0f); // Convert CORR_GAIN to int for faster intiger math on 8bit AVR
+  writeMotor(1, SPEED, 1, SPEED); // Set cruising speed
+  while(!exitCondition(EXIT_CONDITION)) { // Run while exit condition met
+    readUltrasonic(); // Update ultrasonic sensors, no need to update line sensors as they are called in exitCondition()
+    int16_t ERR_LEFT = int16_t(US_STATE[0]) - int16_t(BASE_LEFT); // Calculate left error
+    int16_t ERR_RIGHT = int16_t(US_STATE[1]) - int16_t(BASE_RIGHT); // Calculate right error
+    int16_t ERROR = ERR_RIGHT - ERR_LEFT; // Calculate total error, + = far left, - = far right
+    int16_t DELTA = (ERROR * K) / 1000; // Compute DELTA with correction factor and account for 1000
+    if (DELTA > SPEED) DELTA = SPEED; // Clamp high DELTA
+    if (DELTA < -SPEED) DELTA = -SPEED; // Clamp low DELTA
+    uint8_t SPEED_LEFT  = uint8_t( constrain(int16_t(SPEED) - DELTA, 0, 255) ); // Calculate left speed with oflow protection
+    uint8_t SPEED_RIGHT = uint8_t( constrain(int16_t(SPEED) + DELTA, 0, 255) ); // Calculate right speed with oflow protection
+    writeMotor(1, SPEED_LEFT, 1, SPEED_RIGHT); // Write corrected speed
+    delay(LOOP_DELAY); // Loop delay
+  }
+  writeMotor(0,0,0,0); // Stop motors on exit
+}
+
+void leftTurn(int LOOP_DELAY, int BLIND_DELAY) {
+  writeMotor(2, 255, 1, 255); // Full L differential
+  delay(BLIND_DELAY); // Blind delay
   while (!SENSOR_STATE[2]) { // While CL sensor reads white, turn full differential left
-    writeMotor(2, 255, 1, 255); // Full L differential
     readSensors(); // Update sensors
     delay(LOOP_DELAY); // Loop delay
   }
   while (SENSOR_STATE[2]) { // CL sensor then detects line, keep turning while it detects the line
-    writeMotor(2, 255, 1, 255); // Full L differential
     readSensors(); // Update sensors
     delay(LOOP_DELAY); // Loop delay
   }
   writeMotor(0,0,0,0); // Stop motors on exit, turn finished
 }
 
-void leftTurn(uint8_t L_SPEED, uint8_t R_SPEED, int LOOP_DELAY) {
+void leftTurn(uint8_t L_SPEED, uint8_t R_SPEED, int LOOP_DELAY, int BLIND_DELAY) {
+  writeMotor(2, L_SPEED, 1, R_SPEED); // Custom L differential
+  delay(BLIND_DELAY); // Blind delay
   while (!SENSOR_STATE[2]) { // While CL sensor reads white, turn custom differential left
-    writeMotor(2, L_SPEED, 1, R_SPEED); // Custom L differential
     readSensors(); // Update sensors
     delay(LOOP_DELAY); // Loop delay
   }
   while (SENSOR_STATE[2]) { // CL sensor then detects line, keep turning while it detects the line
-    writeMotor(2, L_SPEED, 1, R_SPEED); // Custom L differential
     readSensors(); // Update sensors
     delay(LOOP_DELAY); // Loop delay
   }
   writeMotor(0,0,0,0); // Stop motors on exit, turn finished
 }
 
-void rightTurn(int LOOP_DELAY) {
+void rightTurn(int LOOP_DELAY, int BLIND_DELAY) {
+  writeMotor(1, 255, 2, 255); // Full R differential
+  delay(BLIND_DELAY); // Blind delay
   while (!SENSOR_STATE[3]) { // While CR sensor reads white, turn full differential right
-    writeMotor(1, 255, 2, 255); // Full R differential
     readSensors(); // Update sensors
     delay(LOOP_DELAY); // Loop delay
   }
   while (SENSOR_STATE[3]) { // CR sensor then detects line, keep turning while it detects the line
-    writeMotor(1, 255, 2, 255); // Full R differential
     readSensors(); // Update sensors
     delay(LOOP_DELAY); // Loop delay
   }
   writeMotor(0,0,0,0);
 }
 
-void rightTurn(uint8_t L_SPEED, uint8_t R_SPEED, int LOOP_DELAY) {
+void rightTurn(uint8_t L_SPEED, uint8_t R_SPEED, int LOOP_DELAY, int BLIND_DELAY) {
+  writeMotor(1, L_SPEED, 2, R_SPEED); // Custom R differential
+  delay(BLIND_DELAY); // Blind delay
   while (!SENSOR_STATE[3]) { // While CR sensor reads white, turn custom differential right
-    writeMotor(1, L_SPEED, 2, R_SPEED); // Custom R differential
     readSensors(); // Update sensors
     delay(LOOP_DELAY); // Loop delay
   }
   while (SENSOR_STATE[3]) { // CR sensor then detects line, keep turning while it detects the line
-    writeMotor(1, L_SPEED, 2, R_SPEED); // Custom R differential
     readSensors(); // Update sensors
     delay(LOOP_DELAY); // Loop delay
   }
