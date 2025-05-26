@@ -77,11 +77,11 @@ int PATHDIR = 0;
 // SENSOR_STATE   -   Stores sensor state for line sensors
 // US_PINS        -   Stores sensor pins for ultrasonics
 // US_STATE       -   Stores sensor state for usltrasonics
-const uint8_t SENSOR_PINS[6] = {A0, A1, A2, A3, 7, 4};
+const uint8_t SENSOR_PINS[6] = {12, 11, A0, A1, A2, A3};
 bool SENSOR_STATE[6] = {false, false, false, false, false, false};
 const uint16_t SENSOR_THRESHOLD = 500;
 
-const uint8_t US_PINS[2] = {12, 13};
+const uint8_t US_PINS[2] = {1, 13};
 uint16_t US_STATE[2] = {0, 0};
 NewPing US_SENSORS[2] = {
   NewPing(US_PINS[0],US_PINS[0],200),
@@ -91,37 +91,9 @@ NewPing US_SENSORS[2] = {
 
 void setup() {
   initSystems();
-  testMotors();
+  testSensors();
 }
 
 void loop() {
-  LOCATION = 1;
-  dynamicFollow(4, 255, 50, 0.8);
-  LOCATION = 2;
-  PATHDIR = junctionDetect(2);
-  switch (PATHDIR) {
-    case 1 : {
-      leftTurn(50, 100);
-      break;
-    }
-    case 2 : {
-      rightTurn(50, 100);
-      break;
-    }
-  }
-  LOCATION = 3;
-  highSpeedFollow(4, 255, 50, 0.4);
-  LOCATION = 4;
-  switch (PATHDIR) {
-    case 1 : {
-      rightTurn(50, 100);
-      break;
-    }
-    case 2 : {
-      leftTurn(50, 100);
-      break;
-    }
-  }
-  LOCATION = 5;
-  dynamicFollow(3, 255, 50, 0.8);
+
 }

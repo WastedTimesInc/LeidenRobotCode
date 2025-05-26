@@ -7,11 +7,11 @@ void writeI2C(uint8_t ADDR, uint8_t VAL){
 }
 
 void readSensors() {
-  for (int i = 0; i < 4; i++) {
-    SENSOR_STATE[i] = !(analogRead(SENSOR_PINS[i]) > SENSOR_THRESHOLD);
-  }
-  for (int i = 4; i < 6; i++) {
+  for (int i = 0; i < 2; i++) {
     SENSOR_STATE[i] = !digitalRead(SENSOR_PINS[i]);
+  }
+  for (int i = 2; i < 6; i++) {
+    SENSOR_STATE[i] = !(analogRead(SENSOR_PINS[i]) > SENSOR_THRESHOLD);
   }
 }
 

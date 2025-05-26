@@ -12,4 +12,6 @@ void testSensors();
 
 void testMotors();
 
+void testUltrasonics()
+
 #endif

@@ -134,3 +134,33 @@ void testMotors() {
 
   Serial.println("Motors Testing Complete");
 }
+
+testUltrasonics() {
+  clearConsole();
+  printFromPROGMEM(US_LOGO);
+  Serial.println("Press [Enter] to continue...");
+
+  while (true) {
+    if (Serial.available() && Serial.read() == '\n') break;
+  }
+
+  clearConsole();
+  while (true) {
+    readUltrasonic();
+    uint16_t lsensor = US_STATE[0];
+    uint16_t rsensor = US_STATE[1];
+
+    // Only update if the color changed
+    clearConsole();
+    Serial.print("L Sensor: ");
+    Serial.println(lsensor);
+    Serial.print("R Sensor: ");
+    Serial.println(rsensor);
+
+    // Exit when Enter is pressed
+    if (Serial.available() && Serial.read() == '\n') break;
+
+    delay(100);
+  }
+  clearConsole();
+}
