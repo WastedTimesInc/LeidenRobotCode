@@ -8,10 +8,13 @@
 #include "linefollow.h"
 #include "titles.h"
 
+void printFromPROGMEM(const char* p);
+
 void testSensors();
 
 void testMotors();
 
-void testUltrasonics()
+void testUltrasonics();
+
 
 #endif

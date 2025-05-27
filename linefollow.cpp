@@ -93,8 +93,8 @@ void dynamicFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float DAMP
     }
     else if (SENSOR_STATE[2] && !SENSOR_STATE[3]) {
       CORR_MULTIPLIER *= DAMPING_FACTOR;
-      if (CORR_MULTIPLIER < 0.20f) {
-        CORR_MULTIPLIER = 0.20f;
+      if (CORR_MULTIPLIER < 0.0f) {
+        CORR_MULTIPLIER = 0.0f;
       }
       uint8_t CORR_SPEED = uint8_t(SPEED * CORR_MULTIPLIER);
       writeMotor(1, BLIP_SPEED, 1, BLIP_SPEED);

@@ -56,6 +56,31 @@ void testSensors() {
   testSingleSensor("Testing BL Sensor", 4);
   testSingleSensor("Testing BR Sensor", 5);
 
+  clearConsole();
+  Serial.println("Exit condition tests.");
+  Serial.println("Press [Enter] to continue...");
+
+  while (true) {
+    if (Serial.available() && Serial.read() == '\n') break;
+  }
+
+  auto testingExitCondition = [](const char* label, int index) {
+    clearConsole();
+    Serial.print("Exit condition ");
+    Serial.print(index);
+    Serial.print(": ");
+    Serial.println(label);
+    while (!exitCondition(index));
+    Serial.println("Latched");
+    Serial.println("Press [Enter] to continue...");
+    while (true) {
+      if (Serial.available() && Serial.read() == '\n') break;
+    }
+  }
+
+  testingExitCondition("Both front sensors", 1);
+  testingExitCondition("Both rear sensors", 1);
+
   Serial.println("Sensors Testing Complete");
 }
 
@@ -135,7 +160,7 @@ void testMotors() {
   Serial.println("Motors Testing Complete");
 }
 
-testUltrasonics() {
+void testUltrasonics() {
   clearConsole();
   printFromPROGMEM(US_LOGO);
   Serial.println("Press [Enter] to continue...");
