@@ -58,9 +58,10 @@ const uint8_t MOTOR_B_INV_MASK = 255 - MOTOR_B_MASK;
 // 4 = X JUNC
 // 5 = PATH TO END LINE
 // 6 = END LINE
-// 7 = ARM DEPLOY
-// 8 = ARM RETRACT
-// 9 = EXIT
+// 7 = ANGLE REACHED
+// 8 = ARM DEPLOY
+// 9 = ARM RETRACT
+// 10 = EXIT
 //
 // PATHDIR INDEX
 // 0 = UNKNOWN;
@@ -77,7 +78,7 @@ int PATHDIR = 0;
 // SENSOR_STATE   -   Stores sensor state for line sensors
 // US_PINS        -   Stores sensor pins for ultrasonics
 // US_STATE       -   Stores sensor state for usltrasonics
-const uint8_t SENSOR_PINS[6] = {12, 11, A0, A1, A2, A3};
+const uint8_t SENSOR_PINS[6] = {7, 4, A0, A1, A2, A3};
 bool SENSOR_STATE[6] = {false, false, false, false, false, false};
 const uint16_t SENSOR_THRESHOLD = 500;
 
@@ -88,14 +89,207 @@ NewPing US_SENSORS[2] = {
   NewPing(US_PINS[1],US_PINS[1],200)
 };
 
+const uint8_t STEPPER_PINS[4] = {8,9,10,11};
+
+const uint16_t ANGLE_TARGET = 1000; 
 
 void setup() {
   //GLOBAL_VERBOSE = true;
   initSystems();
-  //testUltrasonics();
-  highSpeedFollow(0, 255, 15, 0.4);
 }
 
 void loop() {
+  readSensors();
 
+  //LINE FOLLOW 1
+  int correct = 0;
+  bool straight = true;
+  LOCATION = 1;
+  while (!SENSOR_STATE[4] || !SENSOR_STATE[5]) {
+    readSensors();
+    straight = true;
+    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
+      writeMotor(1,200,1,200);
+    }else if (SENSOR_STATE[2]) {
+      writeMotor(0,2,180+correct);
+      writeMotor(1,1,180+correct);
+      straight = false;
+    } else if (SENSOR_STATE[3]) {
+      writeMotor(1,2,180+correct);
+      writeMotor(0,1,180+correct);
+      straight= false;
+    }
+
+    if (straight) {
+      correct = 0;
+    } else {
+      correct+= 1-(correct>75);
+    }
+  }
+  correct = 0;
+  straight = true;
+
+  //TURN 1
+  LOCATION = 2;
+  if (SENSOR_STATE[4]) {
+    PATHDIR = 1;
+    blindMove(2,180,50);
+    leftTurn(220, 220, 10, 20, 0.8, 0.6);
+  } else if (SENSOR_STATE[5]) {
+    PATHDIR = 2;
+    blindMove(2,180,50);
+    rightTurn(220, 220, 10, 20, 0.8, 0.6);
+  }
+
+
+  //LINE FOLLOW 2
+  correct = 0;
+  straight = true;
+  LOCATION = 3;
+  while (!SENSOR_STATE[4] || !SENSOR_STATE[5]) {
+    readSensors();
+    straight = true;
+    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
+      writeMotor(1,200,1,200);
+    }else if (SENSOR_STATE[2]) {
+      writeMotor(0,2,180+correct);
+      writeMotor(1,1,180+correct);
+      straight = false;
+    } else if (SENSOR_STATE[3]) {
+      writeMotor(1,2,180+correct);
+      writeMotor(0,1,180+correct);
+      straight= false;
+    }
+
+    if (straight) {
+      correct = 0;
+    } else {
+      correct+= 1-(correct>75);
+    }
+  }
+  correct = 0;
+  straight = true;
+
+  //TURN 2
+  LOCATION == 4;
+  if (PATHDIR == 1) {
+    blindMove(2,180,50);
+    rightTurn(220, 220, 10, 20, 0.8, 0.6);
+  } else if (PATHDIR == 2) {
+    blindMove(2,180,50);
+    leftTurn(220, 220, 10, 20, 0.8, 0.6);
+  }
+
+  //LINE FOLLOW 3
+  correct = 0;
+  straight = true;
+  LOCATION = 5;
+  while (!SENSOR_STATE[0] && !SENSOR_STATE[1]) {
+    readSensors();
+    straight = true;
+    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
+      writeMotor(1,200,1,200);
+    }else if (SENSOR_STATE[2]) {
+      writeMotor(0,2,180+correct);
+      writeMotor(1,1,180+correct);
+      straight = false;
+    } else if (SENSOR_STATE[3]) {
+      writeMotor(1,2,180+correct);
+      writeMotor(0,1,180+correct);
+      straight= false;
+    }
+
+    if (straight) {
+      correct = 0;
+    } else {
+      correct+= 1-(correct>75);
+    }
+  }
+  correct = 0;
+  straight = true;
+
+  //ANGLE
+  LOCATION = 6;
+  readUltrasonic();
+  int *US_PTR = nullptr;
+  if (PATHDIR == 1) {
+    US_PTR = &US_STATE[1];
+  } else if (PATHDIR == 0) {
+    US_PTR = &US_STATE[0];
+  }
+  while (*US_PTR < ANGLE_TARGET) {
+    readUltrasonic();
+    if (PATHDIR == 1) {
+      writeMotor(1,255,2,255);
+      delay(5);
+      writeMotor(0,0,0,0);
+    } else if (PATHDIR == 2) {
+      writeMotor(2,255,1,255);
+      delay(5);
+      writeMotor(0,0,0,0);
+    }
+  }
+
+  //EXTEND ARM
+  LOCATION = 7;
+  writeStepper(30,3500,false);
+  writeStepper(255,2000,false);
+  writeStepper(30,3500,false);
+  writeStepper(285,2000,false);
+  delay(100);
+
+  //RETRACT ARM
+  LOCATION = 8;
+  writeStepper(285,2000,true);
+  writeStepper(30,3500,true);
+  writeStepper(255,2000,true);
+  writeStepper(30,3500,true);
+  LOCATION = 9;
+
+  //EXIT
+  LOCATION = 10;
+  while (true);
+
+
+
+  /*readSensors();
+  straight = true;
+  if(SENSOR_STATE[2]){
+    writeMotor(0,2,180+correct);
+    writeMotor(1,1,180+correct);
+    straight = false;
+  }else{
+    writeMotor(0,1,200);
+  }
+  if(SENSOR_STATE[3]){
+    writeMotor(1,2,180+correct);
+    writeMotor(0,1,180+correct);
+    straight= false;
+  }else{
+    writeMotor(1,1,200);
+  }
+  if(SENSOR_STATE[2]&&SENSOR_STATE[3]){
+    //writeMotor(1,200,1,200);
+  }
+  if(SENSOR_STATE[4]&&PATHDIR==0){
+    PATHDIR=1;
+    leftTurn(190,190,1,1);
+  }else if(SENSOR_STATE[5]&&PATHDIR==0){
+    PATHDIR=2;
+    rightTurn(190,190,1, 1);
+  }else if(LOCATION!=5&&SENSOR_STATE[4]&&PATHDIR==2){
+    LOCATION = 5;
+    leftTurn(190,190,1, 1);
+  }else if(LOCATION!=5&&SENSOR_STATE[5]&&PATHDIR==1){
+    LOCATION = 5;
+    rightTurn(190,190,1, 1);
+  }else{
+    delay(1); 
+  }
+  if(straight){
+    correct =0;
+  }else{
+    correct+= 1-(correct>75);
+    delay(10);
+  }*/
 }

@@ -43,4 +43,6 @@ extern const uint8_t US_PINS[];
 extern uint16_t US_STATE[];
 extern NewPing US_SENSORS[];
 
+extern const uint8_t STEPPER_PINS[];
+
 #endif // GLOBALS_H
