@@ -76,7 +76,7 @@ void testSensors() {
     while (true) {
       if (Serial.available() && Serial.read() == '\n') break;
     }
-  }
+  };
 
   testingExitCondition("Both front sensors", 1);
   testingExitCondition("Both rear sensors", 1);

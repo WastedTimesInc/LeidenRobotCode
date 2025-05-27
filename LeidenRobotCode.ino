@@ -10,7 +10,7 @@
 #include "unittests.h"
 #include "NewPing.h"
 
-bool GLOBAL_VERBOSE = true;
+bool GLOBAL_VERBOSE = false;
 
 
 //<--------------------MOTOR CTRL-------------------->
@@ -81,7 +81,7 @@ const uint8_t SENSOR_PINS[6] = {12, 11, A0, A1, A2, A3};
 bool SENSOR_STATE[6] = {false, false, false, false, false, false};
 const uint16_t SENSOR_THRESHOLD = 500;
 
-const uint8_t US_PINS[2] = {1, 13};
+const uint8_t US_PINS[2] = {13, 12};
 uint16_t US_STATE[2] = {0, 0};
 NewPing US_SENSORS[2] = {
   NewPing(US_PINS[0],US_PINS[0],200),
@@ -90,8 +90,10 @@ NewPing US_SENSORS[2] = {
 
 
 void setup() {
+  //GLOBAL_VERBOSE = true;
   initSystems();
-  testSensors();
+  //testUltrasonics();
+  highSpeedFollow(0, 255, 15, 0.4);
 }
 
 void loop() {

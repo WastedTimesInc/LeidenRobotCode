@@ -1,5 +1,5 @@
 #include "linefollow.h"
-
+#include <math.h>
 void simpleFollow(int EXIT_CONDITION, uint8_t SPEED, uint8_t CORRECTION_SPEED, bool CORRECTION_FLIP, int LOOP_DELAY) {
   uint8_t CORRECTION_DIR = 1; // Set correction direction by default FWD
   if (CORRECTION_FLIP) { // If correction direction is flipped, set to REV
@@ -130,30 +130,33 @@ void highSpeedFollowLegacy(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, fl
 
 void highSpeedFollow(int EXIT_CONDITION, uint8_t SPEED, int LOOP_DELAY, float CORR_GAIN) {
   readUltrasonic(); // Update ultrasonic sensors
-  uint16_t BASE_LEFT = US_STATE[0]; // Left calibration shot
-  uint16_t BASE_RIGHT = US_STATE[1]; // Right calibration shot
-  int16_t  BASE_NUM = int16_t(BASE_RIGHT) - int16_t(BASE_LEFT); // Numerator for base ratio
-  uint16_t BASE_DEN = BASE_LEFT + BASE_RIGHT; // Denominator for base ratio
-  int16_t  BASE_RATIO = (int32_t(BASE_NUM) * 1000L) / BASE_DEN; // Base ratio ×1000
-  int16_t  K = int16_t(CORR_GAIN * 1000.0f); // Convert CORR_GAIN to int for faster intiger math on 8bit AVR
-  writeMotor(1, SPEED, 1, SPEED); // Set cruising speed
-  while(!exitCondition(EXIT_CONDITION)) { // Run until exit condition met
-    readUltrasonic(); // Update ultrasonic sensors
-    uint16_t CUR_LEFT  = US_STATE[0]; // Current left
-    uint16_t CUR_RIGHT = US_STATE[1]; // Current right
-    int16_t  CUR_NUM = int16_t(CUR_RIGHT) - int16_t(CUR_LEFT); // Numerator
-    uint16_t CUR_DEN = CUR_LEFT + CUR_RIGHT; // Denominator
-    int16_t  CUR_RATIO = (int32_t(CUR_NUM) * 1000L) / CUR_DEN; // Current ratio ×1000
-    int16_t  ERROR = CUR_RATIO - BASE_RATIO; // Proportional error
-    int16_t  DELTA = (int32_t(ERROR) * K) / 1000; // Scaled correction
-    if(DELTA >  SPEED) DELTA =  SPEED; // Clamp high
-    if(DELTA < -SPEED) DELTA = -SPEED; // Clamp low
-    int16_t TMP_LEFT  = constrain(int16_t(SPEED) - DELTA , 0, 255); // Calculate left speed with oflow protection
-    int16_t TMP_RIGHT = constrain(int16_t(SPEED) + DELTA , 0, 255); // Calculate right speed with oflow protection
-    writeMotor(1, uint8_t(TMP_LEFT), 1, uint8_t(TMP_RIGHT)); // Write corrected speed
-    delay(LOOP_DELAY); // Loop delay
+  double  BASE_RATIO = US_STATE[0]/US_STATE[1];
+  writeMotor(1,SPEED,1,SPEED);
+  while(true) {
+    readUltrasonic();
+    double CURRENT_RATIO = US_STATE[0]/US_STATE[1];
+    double DELTA = CURRENT_RATIO - BASE_RATIO;
+    if (DELTA > 0) {
+      writeMotor(1,SPEED/2, 1,SPEED);
+    } else if (DELTA < 0) {
+      writeMotor(1,SPEED, 1,SPEED/2);
+    }
   }
-  writeMotor(0,0,0,0); // Stop motors on exit
+}
+
+void highSpeedFollowV2(){
+  double r1 = 0;
+  readUltrasonic();
+  double r2 = (US_STATE[0]+100)/(US_STATE[1]+100);
+  while(true){
+    if(r1!=0){
+      writeMotor(1,255,1,255);
+    }
+    delay(2);
+    r1= r2;
+    readUltrasonic();
+    r2 = US_STATE[0]/US_STATE[1];
+  }
 }
 
 void leftTurn(int LOOP_DELAY, int BLIND_DELAY) {

@@ -16,8 +16,8 @@ void readSensors() {
 }
 
 void readUltrasonic() {
-  US_STATE[0] = US_SENSORS[0].ping_median(5);
-  US_STATE[1] = US_SENSORS[1].ping_median(5);
+  US_STATE[0] = US_SENSORS[0].ping_median(1);
+  US_STATE[1] = US_SENSORS[1].ping_median(1);
 }
 
 void readUltrasonic(uint8_t PING_ITER) {
