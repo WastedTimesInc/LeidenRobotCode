@@ -16,8 +16,8 @@ void readSensors() {
 }
 
 void readUltrasonic() {
-  US_STATE[0] = US_SENSORS[0].ping_median(1);
-  US_STATE[1] = US_SENSORS[1].ping_median(1);
+  US_STATE[0] = US_SENSORS[0].ping_median(1)+100;
+  US_STATE[1] = US_SENSORS[1].ping_median(1)+100;
 }
 
 void readUltrasonic(uint8_t PING_ITER) {
@@ -34,28 +34,31 @@ void initSystems() {
   for (int i = 0; i < 6; i++) { // For loop for sensors
     pinMode(SENSOR_PINS[i], INPUT); // Init sensor i pin
   }
+  for (int i = 0; i < 4; i++) {
+    pinMode(STEPPER_PINS[i], OUTPUT);
+  }
   Wire.begin(); // Init I2C
   readSensors(); // Pre read sensors
 }
 
 void writeStepper(int STEPS, int PAUSE_DELAY, bool REV) {
   switch (REV) {
-    case false : {
+    case true : {
       for (int step = 0; step < STEPS; step++) {
         for (int phase = 0; phase < 4; phase++) {
           for (int pin = 0; pin < 4; pin++) {
-            digitalWrite(STEPPER_PINS[pin], (pin == phase) ? HIGH : LOW);
+            digitalWrite(STEPPER_PINS[pin], (pin == phase || pin == (phase + 1)%4) ? HIGH : LOW);
           }
           delayMicroseconds(PAUSE_DELAY);
         }
       }
       break;
     }
-    case true : {
+    case false : {
       for (int step = 0; step < STEPS; step++) {
         for (int phase = 3; phase >= 0; phase--) {
           for (int pin = 0; pin < 4; pin++) {
-            digitalWrite(STEPPER_PINS[pin], (pin == phase) ? HIGH : LOW);
+            digitalWrite(STEPPER_PINS[pin], (pin == phase || pin == (phase + 1)%4) ? HIGH : LOW);
           }
           delayMicroseconds(PAUSE_DELAY);
         }
