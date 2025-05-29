@@ -99,118 +99,122 @@ void setup() {
 }
 
 void loop() {
-  readSensors();
-  readUltrasonic();
-  if (US_STATE[0] != 0 && US_STATE[1] == 0) {
-    PATHDIR = 1;
-  } else if (US_STATE[1] != 0 && US_STATE[0] == 0) {
-    PATHDIR = 2;
+  //<---------------INIT AND PATHDIR SELECTION--------------->
+  readSensors();                                                                                    //Read line sensors
+  readUltrasonic();                                                                                 //Read ultrasonic sensors
+  if (US_STATE[0] != 0 && US_STATE[1] == 0) {                                                       //PATHDIR 1 if left reads a value and right reads 0(out of range);
+    PATHDIR = 1;                                                                                    //Set PATHDIR to 1
+  } else if (US_STATE[1] != 0 && US_STATE[0] == 0) {                                                //PATHDIR 2 if right reads a value and left reads 0(out of range);
+    PATHDIR = 2;                                                                                    //Set PATHDIR to 2
   }
 
-  //LINE FOLLOW 1
-  int correct = 0;
-  bool straight = true;
-  LOCATION = 1;
-  switch (PATHDIR) { //First line follow, follows line based until either front sensor trigs depending on PATHDIR
-    case 1 : { //For PATHDIR 1 (turn left first), follow the line until the front left triggers
-      while (!SENSOR_STATE[0]) {
-        readSensors();
-        straight = true;
-        if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
-          writeMotor(1,180,1,180);
-        }else if (SENSOR_STATE[2]) {
-          writeMotor(0,2,180+correct*2);
-          writeMotor(1,1,130);
-          straight = false;
-        } else if (SENSOR_STATE[3]) {
-          writeMotor(1,2,180+correct*2);
-          writeMotor(0,1,130);
-          straight= false;
+
+
+  //<---------------LINE FOLLOW 1--------------->
+  int correct = 0;                                                                                  //Init correction counter                          
+  bool straight = true;                                                                             //Init straight boolean
+  LOCATION = 1;                                                                                     //LOCATION 1 = Initial path before T
+  switch (PATHDIR) {                                                                                //First half line follow, switch on PATHDIR
+    case 1 : {                                                                                      //For PATHDIR 1, follow the line until the front left triggers
+      while (!SENSOR_STATE[0]) {                                                                    //Verify trigger condition
+        readSensors();                                                                              //Read line sensors
+        straight = true;                                                                            //Reset straight to true
+        if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {       //Cruise speed if both CL and CR see white, or both see black
+          writeMotor(1,180,1,180);                                                                  //Write cruise speed
+        }else if (SENSOR_STATE[2]) {                                                                //If left sensors sees black (and by definition right sees white)
+          writeMotor(0,2,180+correct*2);                                                            //Inverse direction correction on the inner wheel
+          writeMotor(1,1,130);                                                                      //Reduced fixed speed on outer wheel
+          straight = false;                                                                         //Set straight to false in order to increment counter
+        } else if (SENSOR_STATE[3]) {                                                               //If right sensors sees black (and by definition left sees white)
+          writeMotor(1,2,180+correct*2);                                                            //Inverse direction correction on the inner wheel
+          writeMotor(0,1,130);                                                                      //Reduced fixed speed on outer wheel
+          straight= false;                                                                          //Set straight to false in order to increment counter
         }
 
-        if (straight) {
-          correct = 0;
-        } else {
-          correct+= 1-(correct>37);
-          delay(10);
+        if (straight) {                                                                             //If straight is true (ie normal cruise)
+          correct = 0;                                                                              //Reset correction counter
+        } else {                                                                                    //Else (ie straight is false)
+          correct+= 1-(correct>37);                                                                 //Increment correction counter (oflow safe)
+          delay(10);                                                                                //Small loop delay to allow correction to properly happen
         }
       }
-      correct = 0;
-      straight = true;
-      break;
+      correct = 0;                                                                                  //Once exited, reset correct
+      straight = true;                                                                              //And reset straight
+      break;                                                                                        //Break switch
     }
-    case 2 : { //For PATHDIR 2 (turn right first), follow the line until the front right triggers
-      while (!SENSOR_STATE[1]) {
-        readSensors();
-        straight = true;
-        if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
-          writeMotor(1,180,1,180);
-        }else if (SENSOR_STATE[2]) {
-          writeMotor(0,2,180+correct*2);
-          writeMotor(1,1,130);
-          straight = false;
-        } else if (SENSOR_STATE[3]) {
-          writeMotor(1,2,180+correct*2);
-          writeMotor(0,1,130);
-          straight= false;
+    case 2 : {                                                                                      //For PATHDIR 2, follow the line until the front left triggers
+      while (!SENSOR_STATE[1]) {                                                                    //Verify trigger condition
+        readSensors();                                                                              //Read line sensors
+        straight = true;                                                                            //Reset straight to true
+        if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {       //Cruise speed if both CL and CR see white, or both see black
+          writeMotor(1,180,1,180);                                                                  //Write cruise speed
+        }else if (SENSOR_STATE[2]) {                                                                //If left sensors sees black (and by definition right sees white)
+          writeMotor(0,2,180+correct*2);                                                            //Inverse direction correction on the inner wheel
+          writeMotor(1,1,130);                                                                      //Reduced fixed speed on outer wheel
+          straight = false;                                                                         //Set straight to false in order to increment counter
+        } else if (SENSOR_STATE[3]) {                                                               //If right sensors sees black (and by definition left sees white)
+          writeMotor(1,2,180+correct*2);                                                            //Inverse direction correction on the inner wheel
+          writeMotor(0,1,130);                                                                      //Reduced fixed speed on outer wheel
+          straight= false;                                                                          //Set straight to false in order to increment counter
         }
-        if (straight) {
-          correct = 0;
-        } else {
-          correct+= 1-(correct>37);
-          delay(10);
+
+        if (straight) {                                                                             //If straight is true (ie normal cruise)
+          correct = 0;                                                                              //Reset correction counter
+        } else {                                                                                    //Else (ie straight is false)
+          correct+= 1-(correct>37);                                                                 //Increment correction counter (oflow safe)
+          delay(10);                                                                                //Small loop delay to allow correction to properly happen
         }
       }
-      correct = 0;
-      straight = true;
-      break;
+      correct = 0;                                                                                  //Once exited, reset correct
+      straight = true;                                                                              //And reset straight
+      break;                                                                                        //Break switch
     }
   }
 
-  switch (PATHDIR) {
-    case 1: { //For PATHDIR 1 keep following the line only using the center right sensor until the rear left triggers, cruise is biased left to avoid loosing the line
-      while (!SENSOR_STATE[4]) { 
-        readSensors();
-        straight = true;
-        if (!SENSOR_STATE[3]) {
-          writeMotor(1,150,1,180);
-        } else if (SENSOR_STATE[3]) {
-          writeMotor(1,2,180+correct*2);
-          writeMotor(0,1,130);
-          straight= false;
+  switch (PATHDIR) {                                                                                //Second half line follow, switch on PATHDIR
+    case 1: {                                                                                       //For PATHDIR 1, follow the line until the rear left triggers
+      while (!SENSOR_STATE[4]) {                                                                    //Verify trigger condition
+        readSensors();                                                                              //Read line sensors
+        straight = true;                                                                            //Reset straight to true
+        if (!SENSOR_STATE[3]) {                                                                     //If center right sees white
+          writeMotor(1,150,1,180);                                                                  //Write cruise biased left to make sure to turn back onto the line
+        } else if (SENSOR_STATE[3]) {                                                               //If center right sees black
+          writeMotor(1,2,180+correct*2);                                                            //Write inversed correction to inner motor
+          writeMotor(0,1,130);                                                                      //Write fixed lower speed to outer motor
+          straight= false;                                                                          //Set straight to false
         }
-        if (straight) {
-          correct = 0;
-        } else {
-          correct+= 1-(correct>37);
-          delay(10);
+        if (straight) {                                                                             //If straight is true (ie normal cruise)
+          correct = 0;                                                                              //Reset correction counter
+        } else {                                                                                    //Else (ie straight is false)
+          correct+= 1-(correct>37);                                                                 //Increment correction counter (oflow safe)
+          delay(10);                                                                                //Small loop delay to allow correction to properly happen
         }
       }
-      correct = 0;
-      straight = true;
-      break;
+      correct = 0;                                                                                  //Once exited, reset correct
+      straight = true;                                                                              //And reset straight
+      break;                                                                                        //Break switch
     }
-    case 2: { //For PATHDIR 2 keep following the line only using the center left sensor until the rear right triggers, cruise is biased right to avoid loosing the line
-      while (!SENSOR_STATE[5]) {
-        readSensors();
-        straight = true;
-        if (!SENSOR_STATE[2]) {
-          writeMotor(1,180,1,150);
-        }else if (SENSOR_STATE[2]) {
-          writeMotor(0,2,180+correct*2);
-          writeMotor(1,1,130);
-          straight = false;
+    case 2: {                                                                                       //For PATHDIR 2, follow the line until the rear right triggers
+      while (!SENSOR_STATE[5]) {                                                                    //Verify trigger conditino
+        readSensors();                                                                              //Read line sensors
+        straight = true;                                                                            //Reset straight to true
+        if (!SENSOR_STATE[2]) {                                                                     //If center left sees white
+          writeMotor(1,180,1,150);                                                                  //Write cruise biased right to make sure to turn back onto the line
+        }else if (SENSOR_STATE[2]) {                                                                //If center right sees black
+          writeMotor(0,2,180+correct*2);                                                            //Write inversed correction to inner motor
+          writeMotor(1,1,130);                                                                      //Write fixed lower speed to outer motor
+          straight = false;                                                                         //Set straight to false
         }
-        if (straight) {
-          correct = 0;
-        } else {
-          correct+= 1-(correct>37);
-          delay(10);
+        if (straight) {                                                                             //If straight is true (ie normal cruise)
+          correct = 0;                                                                              //Reset correction counter
+        } else {                                                                                    //Else (ie straight is false)
+          correct+= 1-(correct>37);                                                                 //Increment correction counter (oflow safe)
+          delay(10);                                                                                //Small loop delay to allow correction to properly happen
         }
       }
-      correct = 0;
-      straight = true;
-      break;
+      correct = 0;                                                                                  //Once exited, reset correct
+      straight = true;                                                                              //And reset straight
+      break;                                                                                        //Break switch
     }
   }
 
@@ -325,7 +329,7 @@ void loop() {
   straight = true;
   LOCATION = 5;
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 100; i++) { //No trig follow (might not be necessary)
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
