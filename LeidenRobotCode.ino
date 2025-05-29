@@ -111,8 +111,8 @@ void loop() {
   int correct = 0;
   bool straight = true;
   LOCATION = 1;
-  switch (PATHDIR) {
-    case 1 : {
+  switch (PATHDIR) { //First line follow, follows line based until either front sensor trigs depending on PATHDIR
+    case 1 : { //For PATHDIR 1 (turn left first), follow the line until the front left triggers
       while (!SENSOR_STATE[0]) {
         readSensors();
         straight = true;
@@ -139,7 +139,7 @@ void loop() {
       straight = true;
       break;
     }
-    case 2 : {
+    case 2 : { //For PATHDIR 2 (turn right first), follow the line until the front right triggers
       while (!SENSOR_STATE[1]) {
         readSensors();
         straight = true;
@@ -166,44 +166,64 @@ void loop() {
       break;
     }
   }
-  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]) {
-    readSensors();
-    straight = true;
-    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
-      writeMotor(1,180,1,180);
-    }else if (SENSOR_STATE[2]) {
-      writeMotor(0,2,180+correct*2);
-      writeMotor(1,1,130);
-      straight = false;
-    } else if (SENSOR_STATE[3]) {
-      writeMotor(1,2,180+correct*2);
-      writeMotor(0,1,130);
-      straight= false;
-    }
 
-    if (straight) {
+  switch (PATHDIR) {
+    case 1: { //For PATHDIR 1 keep following the line only using the center right sensor until the rear left triggers, cruise is biased left to avoid loosing the line
+      while (!SENSOR_STATE[4]) { 
+        readSensors();
+        straight = true;
+        if (!SENSOR_STATE[3]) {
+          writeMotor(1,150,1,180);
+        } else if (SENSOR_STATE[3]) {
+          writeMotor(1,2,180+correct*2);
+          writeMotor(0,1,130);
+          straight= false;
+        }
+        if (straight) {
+          correct = 0;
+        } else {
+          correct+= 1-(correct>37);
+          delay(10);
+        }
+      }
       correct = 0;
-    } else {
-      correct+= 1-(correct>37);
-      delay(10);
+      straight = true;
+      break;
+    }
+    case 2: { //For PATHDIR 2 keep following the line only using the center left sensor until the rear right triggers, cruise is biased right to avoid loosing the line
+      while (!SENSOR_STATE[5]) {
+        readSensors();
+        straight = true;
+        if (!SENSOR_STATE[2]) {
+          writeMotor(1,180,1,150);
+        }else if (SENSOR_STATE[2]) {
+          writeMotor(0,2,180+correct*2);
+          writeMotor(1,1,130);
+          straight = false;
+        }
+        if (straight) {
+          correct = 0;
+        } else {
+          correct+= 1-(correct>37);
+          delay(10);
+        }
+      }
+      correct = 0;
+      straight = true;
+      break;
     }
   }
-  correct = 0;
-  straight = true;
-
 
 
 
   //TURN 1
   LOCATION = 2;
-  if (SENSOR_STATE[4]) {
-    PATHDIR = 1;
+  if (PATHDIR = 1) {
     blindMove(2,255,200);
-    leftTurn(220, 220, 10, 200, 0.8, 0.4);
-  } else if (SENSOR_STATE[5]) {
-    PATHDIR = 2;
+    leftTurn(220, 220, 10, 300, 0.8, 0.4);
+  } else if (PATHDIR = 2) {
     blindMove(2,255,200);
-    rightTurn(220, 220, 10, 200, 0.8, 0.4);
+    rightTurn(220, 220, 10, 300, 0.8, 0.4);
   }
 
 
@@ -215,7 +235,7 @@ void loop() {
   straight = true;
   LOCATION = 3;
   
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 100; i++) { //Blind line follow to avoid early trig on sensors (Maybe not needed with new trig conditions)
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
