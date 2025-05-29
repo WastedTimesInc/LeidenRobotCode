@@ -100,11 +100,72 @@ void setup() {
 
 void loop() {
   readSensors();
+  readUltrasonic();
+  if (US_STATE[0] != 0 && US_STATE[1] == 0) {
+    PATHDIR = 1;
+  } else if (US_STATE[1] != 0 && US_STATE[0] == 0) {
+    PATHDIR = 2;
+  }
 
   //LINE FOLLOW 1
   int correct = 0;
   bool straight = true;
   LOCATION = 1;
+  switch (PATHDIR) {
+    case 1 : {
+      while (!SENSOR_STATE[0]) {
+        readSensors();
+        straight = true;
+        if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
+          writeMotor(1,180,1,180);
+        }else if (SENSOR_STATE[2]) {
+          writeMotor(0,2,180+correct*2);
+          writeMotor(1,1,130);
+          straight = false;
+        } else if (SENSOR_STATE[3]) {
+          writeMotor(1,2,180+correct*2);
+          writeMotor(0,1,130);
+          straight= false;
+        }
+
+        if (straight) {
+          correct = 0;
+        } else {
+          correct+= 1-(correct>37);
+          delay(10);
+        }
+      }
+      correct = 0;
+      straight = true;
+      break;
+    }
+    case 2 : {
+      while (!SENSOR_STATE[1]) {
+        readSensors();
+        straight = true;
+        if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
+          writeMotor(1,180,1,180);
+        }else if (SENSOR_STATE[2]) {
+          writeMotor(0,2,180+correct*2);
+          writeMotor(1,1,130);
+          straight = false;
+        } else if (SENSOR_STATE[3]) {
+          writeMotor(1,2,180+correct*2);
+          writeMotor(0,1,130);
+          straight= false;
+        }
+        if (straight) {
+          correct = 0;
+        } else {
+          correct+= 1-(correct>37);
+          delay(10);
+        }
+      }
+      correct = 0;
+      straight = true;
+      break;
+    }
+  }
   while (!SENSOR_STATE[4] && !SENSOR_STATE[5]) {
     readSensors();
     straight = true;
@@ -130,6 +191,9 @@ void loop() {
   correct = 0;
   straight = true;
 
+
+
+
   //TURN 1
   LOCATION = 2;
   if (SENSOR_STATE[4]) {
@@ -141,6 +205,9 @@ void loop() {
     blindMove(2,255,200);
     rightTurn(220, 220, 10, 200, 0.8, 0.4);
   }
+
+
+
 
 
   //LINE FOLLOW 2
@@ -199,6 +266,9 @@ void loop() {
   straight = true;
 
 
+
+
+
   //TURN 2
   LOCATION == 4;
   if (PATHDIR == 1) {
@@ -208,6 +278,9 @@ void loop() {
     blindMove(2,255,200);
     leftTurn(220, 220, 10, 200, 0.8, 0.4);
   }
+
+
+
 
   //LINE FOLLOW 3
   correct = 0;
