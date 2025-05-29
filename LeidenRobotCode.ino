@@ -230,26 +230,34 @@ void loop() {
 
 
 
-  //TURN 1
-  LOCATION = 2;
-  if (PATHDIR = 1) {
-    blindMove(2,255,250);
-    leftTurn(220, 220, 10, 300, 0.8, 0.4);
-  } else if (PATHDIR = 2) {
-    blindMove(2,255,250);
-    rightTurn(220, 220, 10, 300, 0.8, 0.4);
+  //<------------------------------TURN 1------------------------------>
+  //This is the standard turn procedure, firstly set LOCATION 2 to
+  //indicate that the robot is at the T junction, move the robot
+  //backwards to avoid having to overturn, the finally turn with 
+  //a blind turn duration to avoid false trigger
+  //
+  LOCATION = 2;                                                                                     //Set LOCATION 2 to indicate T juction
+  blindMove(2,255,250);                                                                             //Move backwards to reduce turning radius
+  if (PATHDIR = 1) {                                                                                //If PATHDIR 1
+    leftTurn(220, 220, 10, 300, 0.8, 0.4);                                                          //Turn left with 220 differential, 10ms loop delay, 300ms blind delay
+  } else if (PATHDIR = 2) {                                                                         //If PATHDIR 2
+    rightTurn(220, 220, 10, 300, 0.8, 0.4);                                                         //Turn right with 220 differential, 10ms loop delay, 200ms blind delay
   }
 
 
 
 
 
-  //LINE FOLLOW 2
-  correct = 0;
-  straight = true;
-  LOCATION = 3;
+  //<------------------------------LINE FOLLOW 2------------------------------>
+  //This second line follow consists of a traditional line following algorithm
+  //followed by a tweak adjustment and a blind move to correctly line up
+  //for the X junc turn.
+  //
+  LOCATION = 3;                                                                                     //Set LOCATION 3 to indicate line follow before X junc
+  correct = 0;                                                                                      //Reset correct to 0
+  straight = true;                                                                                  //Reset straight boolean to true
   
-  for (int i = 0; i < 100; i++) { //Blind line follow to avoid early trig on sensors (Maybe not needed with new trig conditions??)
+  for (int i = 0; i < 100; i++) { //TODO? Blind line follow to avoid early trig on sensors (Maybe not needed with new trig conditions??)
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
@@ -273,61 +281,71 @@ void loop() {
     delay(10);
   }
   correct = 0;
-  straight = true;
-  while (!SENSOR_STATE[0] && !SENSOR_STATE[1]) { //Updated to stop on front sensor trig
-    readSensors();
-    straight = true;
-    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
-      writeMotor(1,180,1,180);
-    }else if (SENSOR_STATE[2] || SENSOR_STATE[0]) {
-      writeMotor(0,2,180+correct);
-      writeMotor(1,1,180+correct);
-      straight = false;
-    } else if (SENSOR_STATE[3] || SENSOR_STATE[1]) {
-      writeMotor(1,2,180+correct);
-      writeMotor(0,1,180+correct);
-      straight= false;
+  straight = true;                                                                                  //Reset straight boolean to true
+  while (!SENSOR_STATE[0] && !SENSOR_STATE[1]) {                                                    //Verify trigger condition
+    readSensors();                                                                                  //Read line sensors
+    straight = true;                                                                                //Reset straight to true
+    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {           //If both CL and CR see black, or both see white
+      writeMotor(1,180,1,180);                                                                      //Write cruise speed
+    }else if (SENSOR_STATE[2]) {                                                                    //If CL sensor sees black                                              
+      writeMotor(0,2,180+correct);                                                                  //Write inverse correction to inner motor
+      writeMotor(1,1,180+correct);                                                                  //Write correction to outer motor
+      straight = false;                                                                             //Set straight to false
+    } else if (SENSOR_STATE[3]) {                                                                   //If CR sensor sees black
+      writeMotor(1,2,180+correct);                                                                  //Write inverse correction to inner motor
+      writeMotor(0,1,180+correct);                                                                  //Write correction to outer motor
+      straight= false;                                                                              //Set straight to false
     }
 
-    if (straight) {
-      correct = 0;
-    } else {
-      correct+= 1-(correct>75);
+    if (straight) {                                                                                 //If straight is true (ie normal cruise)
+      correct = 0;                                                                                  //Reset correction counter
+    } else {                                                                                        //Else (ie straight is false)
+      correct+= 1-(correct>37);                                                                     //Increment correction counter (oflow safe)
+      delay(10);                                                                                    //Small loop delay to allow correction to properly happen
     }
-    delay(10);
   }
-  correct = 0;
-  straight = true;
+  correct = 0;                                                                                      //Reset correct to 0
+  straight = true;                                                                                  //Reset straight boolean to true
 
-  blindMove(2,255,250); //Reverse blip to avoid innertial line miss
-  delay(300);
+  blindMove(2,255,250);                                                                             //Reverse blip to avoid innertial line miss after trigger
+  delay(300);                                                                                       //Delay to kill any residual innertia
 
-  for(int i =0;i<500;i++){ //Tweak to straighten at intersection
-    readSensors();
-    if(SENSOR_STATE[0]){
-      writeMotor(0,2,255);
-    }else{
-      writeMotor(0,1,255);
+  for(int i =0;i<500;i++){                                                                          //Tweak to straighten at intersection
+    readSensors();                                                                                  //Read line sensors
+    if(SENSOR_STATE[0]){                                                                            //If front left sensor sees black
+      writeMotor(0,2,255);                                                                          //Full reverse left motor
+    }else{                                                                                          //Else (ie front left sensor sees white)
+      writeMotor(0,1,255);                                                                          //Full forward left motor
     }
-    if(SENSOR_STATE[1]){
-      writeMotor(1,2,255);
-    }else{
-      writeMotor(1,1,255);
+    if(SENSOR_STATE[1]){                                                                            //If front right sensors sees black
+      writeMotor(1,2,255);                                                                          //Full reverse right motor
+    }else{                                                                                          //Else (ie front right sensors sees white)
+      writeMotor(1,1,255);                                                                          //Full forward right motor
     }
-    delay(1);
+    delay(1);                                                                                       //Tiny loop delay to avoid CPU hogging
   }
 
-  writeMotor(1,180,1,180); //Both blind forwards until rear trig
-  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]);
+  writeMotor(0,0,0,0);                                                                              //Stop both motors
+  delay(300);                                                                                       //Delay to kill any residual innertia
 
-  //TURN 2
-  LOCATION = 2;
-  if (PATHDIR = 1) {
-    blindMove(2,255,250);
-    rightTurn(220, 220, 10, 300, 0.8, 0.4);
-  } else if (PATHDIR = 2) {
-    blindMove(2,255,250);
-    leftTurn(220, 220, 10, 300, 0.8, 0.4);
+  writeMotor(1,180,1,180);                                                                          //Move robot forward
+  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]);                                                     //Keep moving until trig on either rear sensor
+  writeMotor(0,0,0,0);                                                                              //Stop both motors once condition trig
+
+
+
+  //<------------------------------TURN 2------------------------------>
+  //This is the standard turn procedure, firstly set LOCATION 4 to
+  //indicate that the robot is at the X junction, move the robot
+  //backwards to avoid having to overturn, the finally turn with 
+  //a blind turn duration to avoid false exit trigger
+  //
+  LOCATION = 4;                                                                                     //Set LOCATION 4 to indicate X juction
+  blindMove(2,255,250);                                                                             //Move backwards to reduce turning radius
+  if (PATHDIR = 1) {                                                                                //If PATHDIR 1
+    rightTurn(220, 220, 10, 300, 0.8, 0.4);                                                         //Turn right with 220 differential, 10ms loop delay, 300ms blind delay
+  } else if (PATHDIR = 2) {                                                                         //If PATHDIR 2
+    leftTurn(220, 220, 10, 300, 0.8, 0.4);                                                          //Turn left with 220 differential, 10ms loop delay, 200ms blind delay
   }
   
 
@@ -452,47 +470,4 @@ void loop() {
   //EXIT
   LOCATION = 10;
   while (true);
-
-
-
-  /*readSensors();
-  straight = true;
-  if(SENSOR_STATE[2]){
-    writeMotor(0,2,180+correct);
-    writeMotor(1,1,180+correct);
-    straight = false;
-  }else{
-    writeMotor(0,1,200);
-  }
-  if(SENSOR_STATE[3]){
-    writeMotor(1,2,180+correct);
-    writeMotor(0,1,180+correct);
-    straight= false;
-  }else{
-    writeMotor(1,1,200);
-  }
-  if(SENSOR_STATE[2]&&SENSOR_STATE[3]){
-    //writeMotor(1,200,1,200);
-  }
-  if(SENSOR_STATE[4]&&PATHDIR==0){
-    PATHDIR=1;
-    leftTurn(190,190,1,1);
-  }else if(SENSOR_STATE[5]&&PATHDIR==0){
-    PATHDIR=2;
-    rightTurn(190,190,1, 1);
-  }else if(LOCATION!=5&&SENSOR_STATE[4]&&PATHDIR==2){
-    LOCATION = 5;
-    leftTurn(190,190,1, 1);
-  }else if(LOCATION!=5&&SENSOR_STATE[5]&&PATHDIR==1){
-    LOCATION = 5;
-    rightTurn(190,190,1, 1);
-  }else{
-    delay(1); 
-  }
-  if(straight){
-    correct =0;
-  }else{
-    correct+= 1-(correct>75);
-    delay(10);
-  }*/
 }
