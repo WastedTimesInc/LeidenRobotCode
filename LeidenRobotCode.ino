@@ -110,7 +110,17 @@ void loop() {
 
 
 
-  //<---------------LINE FOLLOW 1--------------->
+  //<------------------------------LINE FOLLOW 1------------------------------>
+  //This first line follow is done in two parts to avoid false triggers or 
+  //trigger misses at the T junction.
+  //It works as follows:
+  //  Follow the line normally until a trigger condition is met on a front
+  //  sensor (depending on PATHDIR set earlier). Once this condition is met
+  //  a second line follow takes over, using only one sensor, and using a
+  //  biased cruise to make sure to hook back onto the line until a rear
+  //  sensor triggers (again depending on PATHDIR) which concludes this
+  //  initial line follow
+  //
   int correct = 0;                                                                                  //Init correction counter                          
   bool straight = true;                                                                             //Init straight boolean
   LOCATION = 1;                                                                                     //LOCATION 1 = Initial path before T
