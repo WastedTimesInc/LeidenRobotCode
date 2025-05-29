@@ -219,10 +219,10 @@ void loop() {
   //TURN 1
   LOCATION = 2;
   if (PATHDIR = 1) {
-    blindMove(2,255,200);
+    blindMove(2,255,250);
     leftTurn(220, 220, 10, 300, 0.8, 0.4);
   } else if (PATHDIR = 2) {
-    blindMove(2,255,200);
+    blindMove(2,255,250);
     rightTurn(220, 220, 10, 300, 0.8, 0.4);
   }
 
@@ -235,7 +235,7 @@ void loop() {
   straight = true;
   LOCATION = 3;
   
-  for (int i = 0; i < 100; i++) { //Blind line follow to avoid early trig on sensors (Maybe not needed with new trig conditions)
+  for (int i = 0; i < 100; i++) { //Blind line follow to avoid early trig on sensors (Maybe not needed with new trig conditions??)
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
@@ -260,7 +260,7 @@ void loop() {
   }
   correct = 0;
   straight = true;
-  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]) {
+  while (!SENSOR_STATE[0] && !SENSOR_STATE[1]) { //Updated to stop on front sensor trig
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
@@ -285,19 +285,37 @@ void loop() {
   correct = 0;
   straight = true;
 
+  blindMove(2,255,250); //Reverse blip to avoid innertial line miss
+  delay(300);
 
+  for(int i =0;i<500;i++){ //Tweak to straighten at intersection
+    readSensors();
+    if(SENSOR_STATE[0]){
+      writeMotor(0,2,255);
+    }else{
+      writeMotor(0,1,255);
+    }
+    if(SENSOR_STATE[1]){
+      writeMotor(1,2,255);
+    }else{
+      writeMotor(1,1,255);
+    }
+    delay(1);
+  }
 
-
+  writeMotor(1,180,1,180); //Both blind forwards until rear trig
+  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]);
 
   //TURN 2
-  LOCATION == 4;
-  if (PATHDIR == 1) {
-    blindMove(2,255,200);
-    rightTurn(220, 220, 10, 200, 0.8, 0.4);
-  } else if (PATHDIR == 2) {
-    blindMove(2,255,200);
-    leftTurn(220, 220, 10, 200, 0.8, 0.4);
+  LOCATION = 2;
+  if (PATHDIR = 1) {
+    blindMove(2,255,250);
+    rightTurn(220, 220, 10, 300, 0.8, 0.4);
+  } else if (PATHDIR = 2) {
+    blindMove(2,255,250);
+    leftTurn(220, 220, 10, 300, 0.8, 0.4);
   }
+  
 
 
 
@@ -373,20 +391,7 @@ void loop() {
   delay(250);
   writeMotor(0,0,0,0);
   delay(300);
-  for(int i =0;i<500;i++){
-    readSensors();
-    if(SENSOR_STATE[0]){
-      writeMotor(0,2,255);
-    }else{
-      writeMotor(0,1,255);
-    }
-    if(SENSOR_STATE[1]){
-      writeMotor(1,2,255);
-    }else{
-      writeMotor(1,1,255);
-    }
-    delay(1);
-  }
+
   writeMotor(0,0,0,0);
   delay(500);
   //ANGLE
