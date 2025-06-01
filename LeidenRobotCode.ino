@@ -257,7 +257,8 @@ void loop() {
   correct = 0;                                                                                      //Reset correct to 0
   straight = true;                                                                                  //Reset straight boolean to true
   
-  for (int i = 0; i < 100; i++) { //TODO? Blind line follow to avoid early trig on sensors (Maybe not needed with new trig conditions??)
+  //<TEMPORARY REMOVAL, MAY BE PERMENANT if no false trig therefore no blind follow needed>
+  /*for (int i = 0; i < 100; i++) { //TODO? Blind line follow to avoid early trig on sensors (Maybe not needed with new trig conditions??)
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
@@ -279,7 +280,7 @@ void loop() {
       //delay(15);
     }
     delay(10);
-  }
+  }*/
   correct = 0;
   straight = true;                                                                                  //Reset straight boolean to true
   while (!SENSOR_STATE[0] && !SENSOR_STATE[1]) {                                                    //Verify trigger condition
@@ -352,12 +353,16 @@ void loop() {
 
 
 
-  //LINE FOLLOW 3
-  correct = 0;
-  straight = true;
-  LOCATION = 5;
+  //<------------------------------LINE FOLLOW 3------------------------------>
+  //This line follow is a standard line follow until trig on the outer front
+  //sensor to avoid crossing and false triggering the inner front sensor on
+  //the sharp bend
+  LOCATION = 5;                                                                                     //Set LOCATION 5 to indicate line follow after X junc
+  correct = 0;                                                                                      //Reset correct to 0
+  straight = true;                                                                                  //Reset straight boolean to true
 
-  for (int i = 0; i < 100; i++) { //No trig follow (might not be necessary)
+  //<TEMPORARY REMOVAL, MAY BE PERMENANT if no false trig therefore no blind follow needed>
+  /*for (int i = 0; i < 100; i++) { //No trig follow (might not be necessary)
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
@@ -386,88 +391,99 @@ void loop() {
     }
     delay(5);
 
-  } 
+  } */
 
-  while (!SENSOR_STATE[0] || !SENSOR_STATE[1]) {
-    readSensors();
-    straight = true;
-    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
-      writeMotor(1,160,1,160);
-    }else if (SENSOR_STATE[2]) {
-      //writeMotor(0,2,255);
-      //writeMotor(1,1,255);
-      //delay(5);
-      writeMotor(0,2,180+correct*2);
-      writeMotor(1,1,140);
-      straight = false;
-    } else if (SENSOR_STATE[3]) {
-      //writeMotor(0,1,255);
-      //writeMotor(1,2,255);
-      //delay(5);
-      writeMotor(1,2,180+correct*2);
-      writeMotor(0,1,140);
-      straight= false;
+  while (!SENSOR_STATE[PATHDIR%2]) {                                                                //Verify trigger condition
+    readSensors();                                                                                  //Read line sensors
+    straight = true;                                                                                //Reset straight to true
+    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {           //If both CL and CR see black, or both see white
+      writeMotor(1,180,1,180);                                                                      //Write cruise speed
+    }else if (SENSOR_STATE[2]) {                                                                    //If CL sensor sees black                                              
+      writeMotor(0,2,180+correct*2);                                                                //Write inverse correction to inner motor
+      writeMotor(1,1,130);                                                                          //Write fixed correction to outer motor
+      straight = false;                                                                             //Set straight to false
+    } else if (SENSOR_STATE[3]) {                                                                   //If CR sensor sees black
+      writeMotor(1,2,180+correct*2);                                                                //Write inverse correction to inner motor
+      writeMotor(0,1,130);                                                                          //Write fixed correction to outer motor
+      straight= false;                                                                              //Set straight to false
     }
 
-    if (straight) {
-      correct = 0;
-    } else {
-      correct+= 1-(correct>37);
-      
+    if (straight) {                                                                                 //If straight is true (ie normal cruise)
+      correct = 0;                                                                                  //Reset correction counter
+    } else {                                                                                        //Else (ie straight is false)
+      correct+= 1-(correct>37);                                                                     //Increment correction counter (oflow safe)
+      delay(10);                                                                                    //Small loop delay to allow correction to properly happen
     }
-    delay(5);
   }
-  correct = 0;
-  straight = true;
-  writeMotor(2,255,2,25);
-  delay(250);
-  writeMotor(0,0,0,0);
-  delay(300);
+  correct = 0;                                                                                      //Reset correct to 0
+  straight = true;                                                                                  //Reset straight boolean to true
+  writeMotor(2,255,2,25);                                                                           //Reverse blip to avoid innertial line miss which would fake tweak
+  delay(250);                                                                                       //Blip delay
+  writeMotor(0,0,0,0);                                                                              //Stop all motors
+  delay(300);                                                                                       //Allow robot to settle
+  for(int i =0;i<500;i++){                                                                          //Tweak to straighten end
+    readSensors();                                                                                  //Read line sensors
+    if(SENSOR_STATE[0]){                                                                            //If front left sensor sees black
+      writeMotor(0,2,255);                                                                          //Full reverse left motor
+    }else{                                                                                          //Else (ie front left sensor sees white)
+      writeMotor(0,1,255);                                                                          //Full forward left motor
+    }
+    if(SENSOR_STATE[1]){                                                                            //If front right sensors sees black
+      writeMotor(1,2,255);                                                                          //Full reverse right motor
+    }else{                                                                                          //Else (ie front right sensors sees white)
+      writeMotor(1,1,255);                                                                          //Full forward right motor
+    }
+    delay(1);                                                                                       //Tiny loop delay to avoid CPU hogging
+  }
+  writeMotor(0,0,0,0);                                                                              //Stop motors on exit
+  delay(500);                                                                                       //Allow robot to settle
 
-  writeMotor(0,0,0,0);
-  delay(500);
   //ANGLE
-  LOCATION = 6;
-  readSensors();
-  writeMotor(2,220,2,220);
-  delay(300);
-  writeMotor(0,0,0,0);
-  readSensors();
-  while (!SENSOR_STATE[0] && !SENSOR_STATE[1]) {
-    readSensors();
-    if (PATHDIR == 1) {
-      writeMotor(1,255,2,255);
-      delay(12);
-      writeMotor(0,0,0,0);
-      delay(45);    
-    } else if (PATHDIR == 2) {
-      writeMotor(2,255,1,255);
-      delay(12);
-      writeMotor(0,0,0,0);
-      delay(45);
+  LOCATION = 6;                                                                                     //LOCATION 6 to indicate positioned at end line
+  readSensors();                                                                                    //Read line sensors
+  writeMotor(2,220,2,220);                                                                          //Reverse robot to allow front sensors to sweep angle
+  delay(300);                                                                                       //Reverse time
+  writeMotor(0,0,0,0);                                                                              //Stop robot after reverse
+  readSensors();                                                                                    //Read line sensors
+  switch (PATHDIR) {                                                                                //Switch on PATHDIR for sensor condition and angle direction
+    case 1 : {                                                                                      //PATHDIR 1, turn right and sensor trig on front left
+      while (!SENSOR_STATE[0]) {                                                                    //Trig condition
+        writeMotor(1,255,2,255);                                                                    //Write full differential right
+        delay(12);                                                                                  //Right blip delay
+        writeMotor(0,0,0,0);                                                                        //Stop motors
+        delay(45);                                                                                  //Settle delay to avoid excessive innertia
+      }
+    }
+    case 2 : {                                                                                      //PATHDIR 2, turn left and sensor trig on front right
+      while (!SENSOR_STATE[1]) {                                                                    //Trig condition
+        writeMotor(2,255,1,255);                                                                    //Write full differential left
+        delay(12);                                                                                  //Left blip delay
+        writeMotor(0,0,0,0);                                                                        //Stop motors
+        delay(45);                                                                                  //Settle delay to avoid excessive innertia
+      }
     }
   }
-  writeMotor(1,140,1,140);
-  delay(600);
-  writeMotor(0,0,0,0);
+  writeMotor(1,140,1,140);                                                                          //Move robot slowly forward to allow for arm deploy
+  delay(600);                                                                                       //Forward movement duration
+  writeMotor(0,0,0,0);                                                                              //Stop motors
 
   //EXTEND ARM
-  LOCATION = 7;
-  writeStepper(30,3500,false);
-  writeStepper(255,2000,false);
-  writeStepper(30,3500,false);
-  writeStepper(320,2000,false);
-  delay(500);
+  LOCATION = 7;                                                                                     //LOCATION 7 to indicate ready for arm deploy
+  writeStepper(30,3500,false);                                                                      //Slow deploy for start
+  writeStepper(255,2000,false);                                                                     //Fast deploy for first section
+  writeStepper(30,3500,false);                                                                      //Slow deploy for middle interference 
+  writeStepper(320,2000,false);                                                                     //Fast deploy until end
+  delay(500);                                                                                       //Delay to make sure deploy complete
 
   //RETRACT ARM
-  LOCATION = 8;
-  writeStepper(320,2000,true);
-  writeStepper(30,3500,true);
-  writeStepper(255,2000,true);
-  writeStepper(30,3500,true);
-  LOCATION = 9;
+  LOCATION = 8;                                                                                     //LOCATION 8 to indicate ready for arm retract
+  writeStepper(320,2000,true);                                                                      //Fast retract for last section
+  writeStepper(30,3500,true);                                                                       //Slow retract for middle interference
+  writeStepper(255,2000,true);                                                                      //Fast retract for first section
+  writeStepper(30,3500,true);                                                                       //Slow retract to complete deploy
+  LOCATION = 9;                                                                                     //LOCATION 9 to indicate deploy and retract complete
 
   //EXIT
-  LOCATION = 10;
-  while (true);
+  LOCATION = 10;                                                                                    //LOCATION 10 to indicate lap complete
+  while (true);                                                                                     //Code hang to avoid loop
 }
