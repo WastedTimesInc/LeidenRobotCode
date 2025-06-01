@@ -417,8 +417,7 @@ void loop() {
   }
   correct = 0;                                                                                      //Reset correct to 0
   straight = true;                                                                                  //Reset straight boolean to true
-  writeMotor(2,255,2,25);                                                                           //Reverse blip to avoid innertial line miss which would fake tweak
-  delay(250);                                                                                       //Blip delay
+  blindMove(2,255,250);                                                                             //Reverse blip to avoid innertial line miss which would fake tweak
   writeMotor(0,0,0,0);                                                                              //Stop all motors
   delay(300);                                                                                       //Allow robot to settle
   for(int i =0;i<500;i++){                                                                          //Tweak to straighten end
@@ -441,8 +440,7 @@ void loop() {
   //ANGLE
   LOCATION = 6;                                                                                     //LOCATION 6 to indicate positioned at end line
   readSensors();                                                                                    //Read line sensors
-  writeMotor(2,220,2,220);                                                                          //Reverse robot to allow front sensors to sweep angle
-  delay(300);                                                                                       //Reverse time
+  blindMove(2,220,300);                                                                             //Reverse robot to allow front sensors to sweep angle
   writeMotor(0,0,0,0);                                                                              //Stop robot after reverse
   readSensors();                                                                                    //Read line sensors
   switch (PATHDIR) {                                                                                //Switch on PATHDIR for sensor condition and angle direction
@@ -463,8 +461,7 @@ void loop() {
       }
     }
   }
-  writeMotor(1,140,1,140);                                                                          //Move robot slowly forward to allow for arm deploy
-  delay(600);                                                                                       //Forward movement duration
+  blindMove(1,140,600);                                                                             //Move robot slowly forward to allow for arm deploy
   writeMotor(0,0,0,0);                                                                              //Stop motors
 
   //EXTEND ARM
