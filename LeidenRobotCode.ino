@@ -311,7 +311,7 @@ void loop() {
   blindMove(2,255,250);                                                                             //Reverse blip to avoid innertial line miss after trigger
   delay(300);                                                                                       //Delay to kill any residual innertia
 
-  for(int i =0;i<500;i++){                                                                          //Tweak to straighten at intersection
+  for(int i =0;i<200;i++){                                                                          //Tweak to straighten at intersection
     readSensors();                                                                                  //Read line sensors
     if(SENSOR_STATE[0]){                                                                            //If front left sensor sees black
       writeMotor(0,2,255);                                                                          //Full reverse left motor
@@ -329,9 +329,54 @@ void loop() {
   writeMotor(0,0,0,0);                                                                              //Stop both motors
   delay(300);                                                                                       //Delay to kill any residual innertia
 
-  writeMotor(1,180,1,180);                                                                          //Move robot forward
-  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]);                                                     //Keep moving until trig on either rear sensor
-  writeMotor(0,0,0,0);                                                                              //Stop both motors once condition trig
+   correct = 0;
+  straight = true;                                                                                  //Reset straight boolean to true
+  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]) {                                                    //Verify trigger condition
+    readSensors();                                                                                  //Read line sensors
+    straight = true;                                                                                //Reset straight to true
+    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {           //If both CL and CR see black, or both see white
+      writeMotor(1,180,1,180);                                                                      //Write cruise speed
+    }else if (SENSOR_STATE[2]) {                                                                    //If CL sensor sees black                                              
+      writeMotor(0,2,180+correct);                                                                  //Write inverse correction to inner motor
+      writeMotor(1,1,180+correct);                                                                  //Write correction to outer motor
+      straight = false;                                                                             //Set straight to false
+    } else if (SENSOR_STATE[3]) {                                                                   //If CR sensor sees black
+      writeMotor(1,2,180+correct);                                                                  //Write inverse correction to inner motor
+      writeMotor(0,1,180+correct);                                                                  //Write correction to outer motor
+      straight= false;                                                                              //Set straight to false
+    }
+
+    if (straight) {                                                                                 //If straight is true (ie normal cruise)
+      correct = 0;                                                                                  //Reset correction counter
+    } else {                                                                                        //Else (ie straight is false)
+      correct+= 1-(correct>37);                                                                     //Increment correction counter (oflow safe)
+      delay(10);                                                                                    //Small loop delay to allow correction to properly happen
+    }
+  }
+  correct = 0;                                                                                      //Reset correct to 0
+  straight = true;                                                                                  //Reset straight boolean to true
+
+  blindMove(2,255,250);                                                                             //Reverse blip to avoid innertial line miss after trigger
+  delay(300);                                                                                       //Delay to kill any residual innertia
+
+  for(int i =0;i<500;i++){                                                                          //Tweak to straighten at intersection
+    readSensors();                                                                                  //Read line sensors
+    if(SENSOR_STATE[4]){                                                                            //If front left sensor sees black
+      writeMotor(0,2,255);                                                                          //Full reverse left motor
+    }else{                                                                                          //Else (ie front left sensor sees white)
+      writeMotor(0,1,255);                                                                          //Full forward left motor
+    }
+    if(SENSOR_STATE[5]){                                                                            //If front right sensors sees black
+      writeMotor(1,2,255);                                                                          //Full reverse right motor
+    }else{                                                                                          //Else (ie front right sensors sees white)
+      writeMotor(1,1,255);                                                                          //Full forward right motor
+    }
+    delay(1);                                                                                       //Tiny loop delay to avoid CPU hogging
+  }
+
+  writeMotor(0,0,0,0);                                                                              //Stop both motors
+  delay(300);                                                                                       //Delay to kill any residual innertia
+
 
 
 
