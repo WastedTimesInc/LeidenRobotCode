@@ -50,7 +50,7 @@ void writeMotor(uint8_t MOTOR, uint8_t DIR, uint8_t SPEED) {
       }
       writeI2C(CTRL_ADDR, CURRENT);
 
-      SPEED = SPEED*245/255;
+      SPEED = SPEED*251/255;
     
       if (SPEED < 256) {
         analogWrite(SPD_PIN_B, SPEED);
@@ -116,7 +116,7 @@ void writeMotor(uint8_t DIR0, uint8_t SPEED0, uint8_t DIR1, uint8_t SPEED1) {
     Serial.println("SPEED0 OUT OF RANGE");
   }
 
-  SPEED1 = SPEED1*245/255;
+  SPEED1 = SPEED1*251/255;
   // Motor B speed
   if (SPEED1 < 256) {
     analogWrite(SPD_PIN_B, SPEED1);

@@ -85,8 +85,8 @@ const uint16_t SENSOR_THRESHOLD = 500;
 const uint8_t US_PINS[2] = {13, 12};
 uint16_t US_STATE[2] = {0, 0};
 NewPing US_SENSORS[2] = {
-  NewPing(US_PINS[0],US_PINS[0],200),
-  NewPing(US_PINS[1],US_PINS[1],200)
+  NewPing(US_PINS[0],US_PINS[0],50),
+  NewPing(US_PINS[1],US_PINS[1],50)
 };
 
 const uint8_t STEPPER_PINS[4] = {8,9,10,11};
@@ -109,14 +109,14 @@ void loop() {
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
-      writeMotor(1,180,1,180);
+      writeMotor(1,170,1,170);
     }else if (SENSOR_STATE[2]) {
       writeMotor(0,2,180+correct*2);
-      writeMotor(1,1,130);
+      writeMotor(1,1,120);
       straight = false;
     } else if (SENSOR_STATE[3]) {
       writeMotor(1,2,180+correct*2);
-      writeMotor(0,1,130);
+      writeMotor(0,1,120);
       straight= false;
     }
 
@@ -126,29 +126,34 @@ void loop() {
       correct+= 1-(correct>37);
       delay(10);
     }
+    if (PATHDIR == 0) {
+      if (SENSOR_STATE[1]) {
+        PATHDIR = 1;
+      }
+      if (SENSOR_STATE[2]) {
+        PATHDIR = 2;
+      }
+    }
   }
   correct = 0;
   straight = true;
 
   //TURN 1
   LOCATION = 2;
-  if (SENSOR_STATE[4]) {
-    PATHDIR = 1;
+  if (PATHDIR == 1) {
     blindMove(2,255,200);
     leftTurn(220, 220, 10, 200, 0.8, 0.4);
-  } else if (SENSOR_STATE[5]) {
-    PATHDIR = 2;
+  } else if (PATHDIR == 2){
     blindMove(2,255,200);
     rightTurn(220, 220, 10, 200, 0.8, 0.4);
   }
-
 
   //LINE FOLLOW 2
   correct = 0;
   straight = true;
   LOCATION = 3;
   
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 80; i++) {
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
@@ -166,23 +171,22 @@ void loop() {
     if (straight) {
       correct = 0;
     } else {
-      correct+= 1-(correct>75);
+      correct+= 1-(correct>40);
       //delay(15);
     }
     delay(10);
   }
-  correct = 0;
-  straight = true;
-  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]) {
+  readSensors();
+  while (!SENSOR_STATE[0] && !SENSOR_STATE[1]) {
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
       writeMotor(1,180,1,180);
-    }else if (SENSOR_STATE[2] || SENSOR_STATE[0]) {
+    }else if (SENSOR_STATE[2]) {
       writeMotor(0,2,180+correct);
       writeMotor(1,1,180+correct);
       straight = false;
-    } else if (SENSOR_STATE[3] || SENSOR_STATE[1]) {
+    } else if (SENSOR_STATE[3]) {
       writeMotor(1,2,180+correct);
       writeMotor(0,1,180+correct);
       straight= false;
@@ -191,22 +195,57 @@ void loop() {
     if (straight) {
       correct = 0;
     } else {
-      correct+= 1-(correct>75);
+      correct+= 1-(correct>40);
+    }
+    delay(10);
+  }
+  while (!SENSOR_STATE[4] && !SENSOR_STATE[5]) {
+    readSensors();
+    straight = true;
+    if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
+      writeMotor(1,120,1,120);
+    }else if (SENSOR_STATE[2]) {
+      writeMotor(0,2,120+correct);
+      writeMotor(1,1,120+correct);
+      straight = false;
+    } else if (SENSOR_STATE[3]) {
+      writeMotor(1,2,120+correct);
+      writeMotor(0,1,120+correct);
+      straight= false;
+    }
+
+    if (straight) {
+      correct = 0;
+    } else {
+      correct+= 1-(correct>40);
     }
     delay(10);
   }
   correct = 0;
   straight = true;
+  blindMove(2,255,100);
+  writeMotor(0,0,0,0);
 
+  if (!SENSOR_STATE[4] && SENSOR_STATE[5]) {
+    writeMotor(1,160,0,0);
+    while (!SENSOR_STATE[4]) {
+      readSensors();
+    }
+  } else if (!SENSOR_STATE[5] && SENSOR_STATE[4]) {
+    writeMotor(0,0,1,160);
+    while (!SENSOR_STATE[5]) {
+      readSensors();
+    }
+  }
 
   //TURN 2
   LOCATION == 4;
   if (PATHDIR == 1) {
-    blindMove(2,255,200);
-    rightTurn(220, 220, 10, 200, 0.8, 0.4);
+    //blindMove(2,255,100);
+    rightTurn(180, 180, 10, 250, 1, 1);
   } else if (PATHDIR == 2) {
-    blindMove(2,255,200);
-    leftTurn(220, 220, 10, 200, 0.8, 0.4);
+    //blindMove(2,255,100);
+    leftTurn(180, 180, 10, 250, 1, 1);
   }
 
   //LINE FOLLOW 3
@@ -214,24 +253,24 @@ void loop() {
   straight = true;
   LOCATION = 5;
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 200; i++) {
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
-      writeMotor(1,160,1,160);
+      writeMotor(1,170,1,170);
     }else if (SENSOR_STATE[2]) {
       //writeMotor(0,2,255);
       //writeMotor(1,1,255);
       //delay(5);
       writeMotor(0,2,180+correct*2);
-      writeMotor(1,1,140);
+      writeMotor(1,1,120);
       straight = false;
     } else if (SENSOR_STATE[3]) {
       //writeMotor(0,1,255);
       //writeMotor(1,2,255);
       //delay(5);
       writeMotor(1,2,180+correct*2);
-      writeMotor(0,1,140);
+      writeMotor(0,1,120);
       straight= false;
     }
 
@@ -241,64 +280,82 @@ void loop() {
       correct+= 1-(correct>37);
       //delay(15);
     }
-    delay(5);
-
+    delay(20);
   } 
-
+  readSensors();
   while (!SENSOR_STATE[0] || !SENSOR_STATE[1]) {
     readSensors();
     straight = true;
     if ((!SENSOR_STATE[2] && !SENSOR_STATE[3]) || (SENSOR_STATE[2] && SENSOR_STATE[3])) {
-      writeMotor(1,160,1,160);
+      writeMotor(1,170,1,170);
     }else if (SENSOR_STATE[2]) {
       //writeMotor(0,2,255);
       //writeMotor(1,1,255);
       //delay(5);
       writeMotor(0,2,180+correct*2);
-      writeMotor(1,1,140);
+      writeMotor(1,1,120);
       straight = false;
     } else if (SENSOR_STATE[3]) {
       //writeMotor(0,1,255);
       //writeMotor(1,2,255);
       //delay(5);
       writeMotor(1,2,180+correct*2);
-      writeMotor(0,1,140);
+      writeMotor(0,1,120);
       straight= false;
     }
 
     if (straight) {
       correct = 0;
     } else {
-      correct+= 1-(correct>37);
+      correct+= 1-(correct>32);
       
     }
-    delay(5);
+    delay(20);
   }
   correct = 0;
   straight = true;
-  writeMotor(2,255,2,25);
-  delay(250);
+  writeMotor(2,255,2,255);
+  delay(100);
   writeMotor(0,0,0,0);
   delay(300);
-  for(int i =0;i<500;i++){
-    readSensors();
-    if(SENSOR_STATE[0]){
-      writeMotor(0,2,255);
-    }else{
-      writeMotor(0,1,255);
+  readSensors();
+  if (!SENSOR_STATE[0] && SENSOR_STATE[1]) {
+    writeMotor(1,160,0,0);
+    while (!SENSOR_STATE[0]) {
+      readSensors();
     }
-    if(SENSOR_STATE[1]){
-      writeMotor(1,2,255);
-    }else{
-      writeMotor(1,1,255);
+  } else if (!SENSOR_STATE[1] && SENSOR_STATE[0]) {
+    writeMotor(0,0,1,160);
+    while (!SENSOR_STATE[1]) {
+      readSensors();
     }
-    delay(1);
   }
   writeMotor(0,0,0,0);
   delay(500);
   //ANGLE
   LOCATION = 6;
   readSensors();
+  writeMotor(1,150,1,150);
+  while(!SENSOR_STATE[2] && !SENSOR_STATE[3]) {
+    readSensors();
+  }
+  writeMotor(0,0,0,0);
+  //readSensors();
+  /*while(!SENSOR_STATE[4] && !SENSOR_STATE[5]) {
+    readSensors();
+    if (PATHDIR == 1) {
+      writeMotor(0,0,2,255);
+      delay(15);
+      writeMotor(0,0,0,0);
+      delay(45);
+    } else if (PATHDIR == 2) {
+      writeMotor(2,255,0,0);
+      delay(15);
+      writeMotor(0,0,0,0);
+      delay(45);
+    }
+  }
+  blindMove(1,130,200);
   writeMotor(2,220,2,220);
   delay(300);
   writeMotor(0,0,0,0);
@@ -319,7 +376,7 @@ void loop() {
   }
   writeMotor(1,140,1,140);
   delay(600);
-  writeMotor(0,0,0,0);
+  writeMotor(0,0,0,0);*/
 
   //EXTEND ARM
   LOCATION = 7;
@@ -331,10 +388,10 @@ void loop() {
 
   //RETRACT ARM
   LOCATION = 8;
-  writeStepper(320,2000,true);
+  /*writeStepper(320,2000,true);
   writeStepper(30,3500,true);
   writeStepper(255,2000,true);
-  writeStepper(30,3500,true);
+  writeStepper(30,3500,true);*/
   LOCATION = 9;
 
   //EXIT
